@@ -1,5 +1,5 @@
-// ---- Silnik: dane skilli, parsowanie planu, remap, kolejność. Bez DOM. ----
-const ATTRS = ['P', 'M', 'W', 'I', 'C']; // kolejność z okna remapu w grze
+// ---- Engine: skill data, plan parsing, remap, ordering. No DOM. ----
+const ATTRS = ['P', 'M', 'W', 'I', 'C']; // order of the in-game remap window
 const ANAME = { P: 'Perception', M: 'Memory', W: 'Willpower', I: 'Intelligence', C: 'Charisma' };
 const LV = [0, 250, 1415, 8000, 45255, 256000];
 const ROMAN = { i: 1, ii: 2, iii: 3, iv: 4, v: 5 };
@@ -14,7 +14,7 @@ for (const [id, name, group, rank, p, s, req] of SKILLS) {
 
 function skillByName(n) { return BY_NAME.get(n.trim().toLowerCase().replace(/\s+/g, ' ')); }
 
-// Zwraca {entries:[{id,lvl}], unknown:[linia]}
+// Returns {entries:[{id,lvl}], unknown:[line]}
 function parseList(text) {
   const entries = [], unknown = [];
   for (let raw of String(text || '').split(/\r?\n/)) {
@@ -32,10 +32,10 @@ function parseList(text) {
 function spFor(sk, L) { return sk.rank * (LV[L] - LV[L - 1]); }
 function rateOf(sk, a, imp) { return (a[sk.p] + imp) + (a[sk.s] + imp) / 2; } // SP/min
 
-// Buduje pozycje kolejki z planu. trainedExtra: Map id->poziom (opcjonalnie wklejone wytrenowane skille).
-// starter: Map id->poziom skilli startowych; liczą się tylko dla skilli spoza planu.
+// Builds queue entries from the plan. trainedExtra: Map id->level (optional pasted trained skills).
+// starter: Map id->level of starting skills; they only count for skills outside the plan.
 function buildPlan(entries, trainedExtra, starter) {
-  const planned = new Map(); // id -> Set poziomów
+  const planned = new Map(); // id -> Set of levels
   for (const e of entries) {
     if (!planned.has(e.id)) planned.set(e.id, new Set());
     planned.get(e.id).add(e.lvl);
@@ -45,7 +45,7 @@ function buildPlan(entries, trainedExtra, starter) {
   for (const [id, set] of planned) {
     const sk = BY_ID.get(id);
     const min = Math.min(...set), max = Math.max(...set);
-    // Poziomy poniżej pierwszego w planie uznajemy za wytrenowane.
+    // Levels below the first one in the plan are treated as trained.
     const have = Math.max(trained.get(id) || 0, min - 1);
     trained.set(id, have);
     if (have >= max) continue;
@@ -74,14 +74,14 @@ function buildPlan(entries, trainedExtra, starter) {
   return { items, missing: [...missing.values()], levelOf, planned };
 }
 
-// Wszystkie remapy: każdy atrybut 17..27, razem 99.
+// All remaps: each attribute 17..27, 99 in total.
 const REMAPS = [];
 (function gen(i, left, cur) {
   if (i === 4) { if (left <= 10) { const a = {}; ATTRS.forEach((k, j) => a[k] = 17 + (j < 4 ? cur[j] : left)); REMAPS.push(a); } return; }
   for (let x = 0; x <= Math.min(10, left); x++) gen(i + 1, left - x, [...cur, x]);
 })(0, 14, []);
 
-// Cybernetics: trenując poziom L masz L-1, więc implanty działają najwyżej do +(L-1).
+// Cybernetics: while training level L you have L-1, so implants work up to +(L-1) at most.
 const CYBER = BY_NAME.get('cybernetics').id;
 function impOf(it, imp) { return it.sk.id === CYBER ? Math.min(imp, it.lvl - 1) : imp; }
 function itT(it, a, imp) { return it.sp / rateOf(it.sk, a, impOf(it, imp)); }
@@ -98,7 +98,7 @@ function bestRemap(items, imp) {
   return { a: best, t: bt };
 }
 
-// Maksymalne domknięcie (min-cut): wybiera zbiór A (blok 1) zamknięty na wymagania.
+// Maximum closure (min-cut): picks set A (block 1) closed under prerequisites.
 function closure(items, w) {
   const n = items.length, S = n, T = n + 1, N = n + 2;
   const head = new Int32Array(N).fill(-1), to = [], cap = [], nxt = [];
@@ -144,16 +144,16 @@ function bestTwo(items, imp) {
   return best;
 }
 
-// Kolejność w bloku: najpierw najkrótsze, ale wymagania zawsze wcześniej.
+// Order inside a block: shortest first, but prerequisites always earlier.
 function orderBlock(items, a, imp, done) {
   const left = new Set(items), out = [];
   const ready = it => it.deps.every(d => done.has(d));
   while (left.size) {
     let pick = null, pt = Infinity;
-    // Cybernetics i jej wymagania zawsze na początek, żeby jak najszybciej wpiąć implanty.
+    // Cybernetics and its prerequisites always go first, so implants can be plugged in as soon as possible.
     const firstLeft = [...left].some(it => it.first);
     for (const it of left) if (ready(it) && (!firstLeft || it.first)) { const t = itT(it, a, imp); if (t < pt || (t === pt && it.lvl < pick.lvl)) { pt = t; pick = it; } }
-    if (!pick) { pick = left.values().next().value; pt = itT(pick, a, imp); } // nie powinno się zdarzyć
+    if (!pick) { pick = left.values().next().value; pt = itT(pick, a, imp); } // should not happen
     left.delete(pick); done.add(pick); out.push({ it: pick, t: pt });
   }
   return out;
@@ -183,7 +183,7 @@ function fmtDur(min) {
   return (d ? d + 'd ' : '') + (d || h ? h + 'h ' : '') + m + 'm';
 }
 
-// ---- Propozycje skilli wspierających. when(ctx) dostaje nazwy i grupy skilli z planu. ----
+// ---- Support skill suggestions. when(ctx) gets the names and groups of skills in the plan. ----
 const RULES = [
   { id: 'fit', label: { pl: 'Fitowanie i cap', en: 'Fitting and capacitor' }, why: { pl: 'Bez nich brakuje CPU, PG albo capa na każdym statku', en: 'Without these you run short of CPU, powergrid or cap on every ship' },
     when: c => c.groups.has('Spaceship Command'),
@@ -232,7 +232,7 @@ const RULES = [
     add: [['Cybernetics', 5]] },
 ];
 
-// Zwraca [{rule, rows:[{sk, lvl, from, why}]}] tylko z tym, czego brakuje w planie.
+// Returns [{rule, rows:[{sk, lvl, from, why}]}] with only what the plan is missing.
 function suggestions(planObj) {
   const names = new Set(), groups = new Set();
   for (const id of planObj.planned.keys()) { const sk = BY_ID.get(id); names.add(sk.name); groups.add(sk.group); }
@@ -255,11 +255,11 @@ function suggestions(planObj) {
 }
 
 
-// ---- Fit: parsowanie EFT i skille potrzebne do statku. TYPES: [nazwa, kategoria, grupa, metaGroup, wymagania] ----
+// ---- Fit: EFT parsing and the skills a ship needs. TYPES: [name, category, group, metaGroup, requirements] ----
 const TYPE_BY_NAME = new Map();
 if (typeof TYPES !== 'undefined') for (const [name, cat, group, meta, req] of TYPES) TYPE_BY_NAME.set(name.toLowerCase(), { name, cat, group, meta, req });
 
-// EFT: [Statek, nazwa], potem moduły "Moduł, Amunicja", drony/cargo "Nazwa x5".
+// EFT: [Ship, name], then modules "Module, Ammo", drones/cargo "Name x5".
 function parseFit(text) {
   const lines = String(text || '').split(/\r?\n/).map(l => l.trim()).filter(Boolean);
   let ship = null, fitName = '';
@@ -287,7 +287,7 @@ const ELITE5 = new Set(['Gunnery', 'Drones', 'Missile Launcher Operation', 'Rapi
   'Hull Upgrades', 'Shield Management', 'Shield Upgrades', 'Shield Operation', 'Repair Systems', 'Mechanics', 'Capacitor Management', 'Capacitor Systems Operation',
   'CPU Management', 'Power Grid Management', 'Weapon Upgrades', 'Navigation', 'Evasive Maneuvering', 'Leadership', 'Thermodynamics']);
 
-// tier: 0 minimum, 1 dobrze, 2 elita. Zwraca Map skillId -> {lvl, why:'ship'|'weapon'|'module'|'support'|'req'}
+// tier: 0 minimum, 1 good, 2 elite. Returns Map skillId -> {lvl, why:'ship'|'weapon'|'module'|'support'|'req'}
 function fitSkills(fit, tier) {
   const need = new Map();
   const want = (id, lvl, why) => {
@@ -311,7 +311,7 @@ function fitSkills(fit, tier) {
     else for (const [id, l] of t.req) want(id, l, weapon ? 'weapon' : 'module');
   }
   if (tier) {
-    // Skille wspierające z tych samych reguł co w planie, dobrane do skilli, których wymaga fit.
+    // Support skills from the same rules as the plan, matched to the skills the fit needs.
     const names = new Set([...need.keys()].map(id => BY_ID.get(id).name));
     const groups = new Set([...need.keys()].map(id => BY_ID.get(id).group));
     const ctx = { names, groups, items: 1 };
