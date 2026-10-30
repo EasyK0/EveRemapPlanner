@@ -1,5 +1,5 @@
 <!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Planer remapu EVE</title>
+<title>EVE Remap Planner</title>
 <meta name="claude:viewport-fit-sides" content="cover">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -624,7 +624,7 @@ if (typeof module !== 'undefined') module.exports = { parseFit, fitSkills, TYPE_
   };
   const T = {
     en: {
-      title: 'EVE <span>Remap</span> Planner', sub: 'Paste a skill plan from the game. The planner finds the best remap, orders the queue shortest first while keeping prerequisites, and points out skills you may be missing.',
+      title: 'EVE <span>Remap</span> Planner', docTitle: 'EVE Remap Planner', sub: 'Paste a skill plan from the game. The planner finds the best remap, orders the queue shortest first while keeping prerequisites, and points out skills you may be missing.',
       planLbl: 'Skill plan', remapsLbl: 'Remaps to use', rm0: 'No remap', rm1: '1 remap', rm2: '2 remaps',
       impLbl: 'Attribute implants', none: 'none', impHint: 'Counted as a full set: the same bonus on every attribute.',
       curLbl: 'Current attributes (without implants)', trainedLbl: 'Skills you already have (optional)',
@@ -658,7 +658,7 @@ if (typeof module !== 'undefined') module.exports = { parseFit, fitSkills, TYPE_
       raceInfo: (r, n, a) => `${a ? 'Detected from the plan: ' : ''}${r}, ${n} starting skills count as trained (only for skills outside the plan).`, raceOff: 'Starting skills are ignored.', raceCommon: n => `No race found in the plan, so only the ${n} skills every race starts with count as trained.`, addedReq: 'Prerequisites added', switchTo: 'Polski', switchAria: 'Przełącz na polski', locale: 'en-GB',
     },
     pl: {
-      title: 'Planer <span>remapu</span>', sub: 'Wklej plan skilli z gry. Planer policzy najlepszy remap, ułoży kolejkę od najkrótszych skilli z zachowaniem wymagań i podpowie, czego może brakować.',
+      title: 'Planer <span>remapu</span>', docTitle: 'Planer remapu EVE', sub: 'Wklej plan skilli z gry. Planer policzy najlepszy remap, ułoży kolejkę od najkrótszych skilli z zachowaniem wymagań i podpowie, czego może brakować.',
       planLbl: 'Plan skilli', remapsLbl: 'Ile remapów chcesz użyć', rm0: 'Bez remapu', rm1: '1 remap', rm2: '2 remapy',
       impLbl: 'Implanty atrybutowe', none: 'brak', impHint: 'Liczone jako pełny zestaw: ten sam bonus na każdy atrybut.',
       curLbl: 'Obecne atrybuty (bez implantów)', trainedLbl: 'Skille, które już masz (opcjonalnie)',
@@ -711,6 +711,7 @@ if (typeof module !== 'undefined') module.exports = { parseFit, fitSkills, TYPE_
   function applyLang() {
     L = T[state.lang];
     document.documentElement.lang = state.lang;
+    document.title = L.docTitle;
     document.querySelectorAll('[data-i]').forEach(el => { el.innerHTML = L[el.dataset.i]; });
     // The button shows the flag of the other language
     const other = state.lang === 'en' ? 'pl' : 'en';

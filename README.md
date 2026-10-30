@@ -1,4 +1,4 @@
-# EveRemapPlanner (Planer remapu)
+# EveRemapPlanner (EVE Remap Planner)
 
 A single-page EVE Online skill-plan calculator. Paste a skill plan and it:
 
@@ -12,7 +12,7 @@ Skill data (ranks, attributes, prerequisites) comes from the EVE static data exp
 
 ## Files
 
-- `planer-remapu.html`: the full app in one file (open it in a browser).
+- `remap-planner.html`: the full app in one file (open it in a browser).
 - `engine.js`: the calculation engine (skill data, plan parsing, remap, ordering), no DOM.
 - `exe-src/`: a Go wrapper that embeds the HTML, serves it on `127.0.0.1:47321` and opens it in Edge/Chrome `--app` mode. It closes when the window is closed or after 3 minutes without a ping.
 
@@ -20,7 +20,7 @@ Skill data (ranks, attributes, prerequisites) comes from the EVE static data exp
 
 ```
 cd exe-src
-cp ../planer-remapu.html .
+cp ../remap-planner.html .
 go install github.com/tc-hib/go-winres@v0.3.3
 go-winres make --arch amd64
 GOOS=windows GOARCH=amd64 CGO_ENABLED=0 go build -trimpath -ldflags "-H windowsgui -s -w" -o PlanerRemapu.exe .
