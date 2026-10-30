@@ -23,5 +23,5 @@ cd exe-src
 cp ../remap-planner.html .
 go install github.com/tc-hib/go-winres@v0.3.3
 go-winres make --arch amd64
-GOOS=windows GOARCH=amd64 CGO_ENABLED=0 go build -trimpath -ldflags "-H windowsgui -s -w" -o PlanerRemapu.exe .
+GOOS=windows GOARCH=amd64 CGO_ENABLED=0 go build -trimpath -ldflags "-H windowsgui -s -w" -o EveRemapPlanner.exe .
 ```

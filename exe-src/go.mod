@@ -1,3 +1,3 @@
-module planerremapu
+module everemapplanner
 
 go 1.24

@@ -1,5 +1,5 @@
 {
   "RT_GROUP_ICON": { "APP": { "0000": ["../icon.png"] } },
-  "RT_MANIFEST": { "#1": { "0409": { "identity": { "name": "PlanerRemapu", "version": "1.0.0.0" }, "description": "Planer remapu EVE", "minimum-os": "win7", "execution-level": "as invoker", "dpi-awareness": "system" } } },
-  "RT_VERSION": { "#1": { "0000": { "fixed": { "file_version": "1.0.0.0", "product_version": "1.0.0.0" }, "info": { "0409": { "FileDescription": "Planer remapu EVE", "ProductName": "Planer remapu EVE", "ProductVersion": "1.0", "FileVersion": "1.0", "OriginalFilename": "PlanerRemapu.exe", "LegalCopyright": "EVE data (c) CCP Games" } } } } }
+  "RT_MANIFEST": { "#1": { "0409": { "identity": { "name": "EveRemapPlanner", "version": "1.1.0.0" }, "description": "EVE Remap Planner", "minimum-os": "win7", "execution-level": "as invoker", "dpi-awareness": "system" } } },
+  "RT_VERSION": { "#1": { "0000": { "fixed": { "file_version": "1.1.0.0", "product_version": "1.1.0.0" }, "info": { "0409": { "FileDescription": "EVE Remap Planner", "ProductName": "EVE Remap Planner", "ProductVersion": "1.1", "FileVersion": "1.1", "OriginalFilename": "EveRemapPlanner.exe", "LegalCopyright": "EVE data (c) CCP Games" } } } } }
 }
