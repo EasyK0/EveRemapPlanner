@@ -16,7 +16,7 @@ import (
 	"unsafe"
 )
 
-//go:embed planer-remapu.html
+//go:embed remap-planner.html
 var page []byte
 
 const addr = "127.0.0.1:47321"
