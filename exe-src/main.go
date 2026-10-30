@@ -1,6 +1,6 @@
-// Planer remapu EVE: lokalny program, który pokazuje planer we własnym oknie.
-// Serwuje wbudowaną stronę na 127.0.0.1:47321 (stały port, żeby przeglądarka pamiętała ustawienia)
-// i zamyka się sam, gdy okno planera zostanie zamknięte.
+// EVE Remap Planner: a small local program that shows the planner in its own window.
+// It serves the embedded page on 127.0.0.1:47321 (a fixed port, so the browser keeps the saved settings)
+// and exits by itself when the planner window is closed.
 package main
 
 import (
@@ -25,11 +25,11 @@ const url = "http://" + addr + "/"
 func msgBox(text string) {
 	u := syscall.NewLazyDLL("user32.dll").NewProc("MessageBoxW")
 	t, _ := syscall.UTF16PtrFromString(text)
-	c, _ := syscall.UTF16PtrFromString("Planer remapu EVE")
+	c, _ := syscall.UTF16PtrFromString("EVE Remap Planner")
 	u.Call(0, uintptr(unsafe.Pointer(t)), uintptr(unsafe.Pointer(c)), 0x10)
 }
 
-// Okno aplikacji: Edge (jest w każdym Windows 10/11) albo Chrome w trybie --app, inaczej domyślna przeglądarka.
+// App window: Edge (part of every Windows 10/11) or Chrome in --app mode, otherwise the default browser.
 func openWindow() {
 	var cands []string
 	for _, env := range []string{"ProgramFiles(x86)", "ProgramFiles", "LOCALAPPDATA"} {
@@ -52,13 +52,13 @@ func openWindow() {
 func main() {
 	ln, err := net.Listen("tcp", addr)
 	if err != nil {
-		// Program już działa: otwórz tylko kolejne okno.
+		// Already running: just open another window.
 		if resp, e := http.Get(url + "ping"); e == nil {
 			resp.Body.Close()
 			openWindow()
 			return
 		}
-		msgBox("Nie mogę uruchomić planera, port 47321 jest zajęty przez inny program.\n\n" + err.Error())
+		msgBox("Cannot start the planner: port 47321 is used by another program.\n\n" + err.Error())
 		return
 	}
 
@@ -90,8 +90,8 @@ func main() {
 	go http.Serve(ln, mux)
 	openWindow()
 
-	// Strona pinguje co 5 s, a przy zamknięciu wysyła /bye. Po /bye bez nowego pingu przez 4 s program się zamyka.
-	// Zminimalizowane okno pinguje rzadziej, więc bez /bye czekamy aż 3 min (90 s na pierwsze otwarcie).
+	// The page pings every 5 s and sends /bye when it closes. After /bye with no new ping for 4 s the program exits.
+	// A minimized window pings less often, so without /bye we wait up to 3 min (90 s for the first open).
 	for {
 		time.Sleep(time.Second)
 		mu.Lock()
