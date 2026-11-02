@@ -16,6 +16,16 @@ Skill data (ranks, attributes, prerequisites) comes from the EVE static data exp
 - `engine.js`: the calculation engine (skill data, plan parsing, remap, ordering), no DOM.
 - `exe-src/`: a Go wrapper that embeds the HTML, serves it on `127.0.0.1:47321` and opens it in Edge/Chrome `--app` mode. It closes when the window is closed or after 3 minutes without a ping.
 
+## Tests
+
+Needs Node.js 20 or newer, no packages:
+
+```
+node --test tests/engine.test.js
+```
+
+The tests load the skill data from `remap-planner.html` and the engine from `engine.js`. The page has its own copy of the engine, so after changing `engine.js` copy it into the page too (one test checks this).
+
 ## Building the exe
 
 ```

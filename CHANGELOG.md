@@ -2,6 +2,11 @@
 
 All notable changes to Remap Planner. Adding a new version at the top publishes a GitHub release for it.
 
+## [Unreleased]
+
+- Tests for `engine.js` with Node's built-in test runner (`tests/engine.test.js`): remap results, queue order with prerequisites, shortest-first order, Cybernetics first, implant limit while training Cybernetics, plan parsing, and a check that the engine copy inside `remap-planner.html` matches `engine.js`.
+- Known issue, kept as a todo test: choosing 2 remaps for a plan where every skill uses the same attribute pair fails (`bestTwo()` finds no pair of remaps).
+
 ## [1.1.0] - 2026-10-28
 
 - English first: the window title, code comments and the Windows app are now in English; Polish stays available with the flag button.
