@@ -68,7 +68,7 @@ test('queue: prerequisites always come before the skills that need them', () => 
   }
 });
 
-test('2 remaps: a plan that uses only one attribute pair', { todo: 'bestTwo() returns null when every skill has the same primary/secondary pair' }, () => {
+test('2 remaps: a plan that uses only one attribute pair falls back to one remap', () => {
   const { items } = build([levels('Spaceship Command', 5), levels('Gallente Frigate', 5)].join('\n'));
   const two = E.plan(items, 2, CUR, 0);
   assert.ok(Math.abs(two.total - E.plan(items, 1, CUR, 0).total) < 1e-6);
