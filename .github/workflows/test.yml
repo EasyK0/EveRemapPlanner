@@ -1,6 +1,6 @@
 name: Tests
 
-# Runs the engine tests on every push and pull request.
+# Runs the engine tests and builds the Windows wrapper on every push and pull request.
 on:
   push:
   pull_request:
@@ -9,7 +9,7 @@ permissions:
   contents: read
 
 jobs:
-  test:
+  engine:
     runs-on: ubuntu-latest
     strategy:
       matrix:
@@ -20,3 +20,21 @@ jobs:
         with:
           node-version: ${{ matrix.node }}
       - run: node --test tests/engine.test.js
+
+  exe:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-go@v5
+        with:
+          go-version-file: exe-src/go.mod
+      - name: Vet and build
+        working-directory: exe-src
+        env:
+          GOOS: windows
+          GOARCH: amd64
+          CGO_ENABLED: "0"
+        run: |
+          cp ../remap-planner.html .
+          go vet .
+          go build -trimpath -ldflags "-H windowsgui -s -w" -o EveRemapPlanner.exe .

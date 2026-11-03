@@ -424,6 +424,8 @@ function bestTwo(items, imp) {
     }
     if (A && (!best || total < best.total)) best = { total, blocks: [{ a: rA, items: A }, { a: rB, items: B }] };
   }
+  // Every skill wants the same remap: a second remap cannot help, so use one.
+  if (!best) { const one = bestRemap(items, imp); return { total: one.t, blocks: [{ a: one.a, items }] }; }
   best.blocks = best.blocks.filter(b => b.items.length);
   return best;
 }
