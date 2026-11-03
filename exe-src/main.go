@@ -87,7 +87,18 @@ func main() {
 		w.Header().Set("Cache-Control", "no-store")
 		w.Write(page)
 	})
-	go http.Serve(ln, mux)
+	// Only answer requests addressed to this server, so a web page cannot reach it
+	// through a DNS name that points at 127.0.0.1 (DNS rebinding).
+	localOnly := http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		if r.Host != addr && r.Host != "localhost:47321" {
+			http.Error(w, "forbidden", http.StatusForbidden)
+			return
+		}
+		w.Header().Set("X-Content-Type-Options", "nosniff")
+		w.Header().Set("X-Frame-Options", "DENY")
+		mux.ServeHTTP(w, r)
+	})
+	go http.Serve(ln, localOnly)
 	openWindow()
 
 	// The page pings every 5 s and sends /bye when it closes. After /bye with no new ping for 4 s the program exits.
