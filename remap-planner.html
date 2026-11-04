@@ -645,7 +645,7 @@ if (typeof module !== 'undefined') module.exports = { planText, parseFit, fitSki
       impLbl: 'Attribute implants', none: 'none', impHint: 'Counted as a full set: the same bonus on every attribute.',
       curLbl: 'Current attributes (without implants)', trainedLbl: 'Skills you already have (optional)',
       trainedHint: 'Enter skills outside the plan with their current level. Suggestions will then show only what you are really missing.',
-      missingH: 'You may be missing', queueH: 'Queue in optimal order', copyAll: 'Copy whole plan',
+      missingH: 'You may be missing', queueH: 'Queue in optimal order', copyAll: 'Copy whole plan', exportPlan: 'Export plan', expTitle: 'EVE Remap Planner plan',
       queueHint: 'Paste the copied list into a skill plan in the game. In each block short skills go first, and a skill always comes after its prerequisites.',
       planInfo: (n, sp) => `${n} levels to train, ${sp} M SP.`, dup: n => ` Skipped ${n} duplicates.`, unknown: n => `Not recognised (${n}):`,
       sumOk: 'Total 99, correct.', sumBad: s => `Total ${s}. Without implants attributes always add up to 99, check the numbers.`,
@@ -679,7 +679,7 @@ if (typeof module !== 'undefined') module.exports = { planText, parseFit, fitSki
       impLbl: 'Implanty atrybutowe', none: 'brak', impHint: 'Liczone jako pełny zestaw: ten sam bonus na każdy atrybut.',
       curLbl: 'Obecne atrybuty (bez implantów)', trainedLbl: 'Skille, które już masz (opcjonalnie)',
       trainedHint: 'Wpisz skille spoza planu z ich obecnym poziomem. Wtedy propozycje pokażą tylko to, czego naprawdę brakuje.',
-      missingH: 'Może brakować', queueH: 'Kolejka w optymalnej kolejności', copyAll: 'Kopiuj cały plan',
+      missingH: 'Może brakować', queueH: 'Kolejka w optymalnej kolejności', copyAll: 'Kopiuj cały plan', exportPlan: 'Eksportuj plan', expTitle: 'Plan z Planera remapu EVE',
       queueHint: 'Skopiowaną listę wklejasz w grze do planu skilli. W każdym bloku najpierw idą krótkie skille, a skill zawsze po swoich wymaganiach.',
       planInfo: (n, sp) => `${n} poziomów do wytrenowania, ${sp} mln SP.`, dup: n => ` Pominięto ${n} powtórzonych.`, unknown: n => `Nie rozpoznano (${n}):`,
       sumOk: 'Suma 99, zgadza się.', sumBad: s => `Suma ${s}. Bez implantów suma atrybutów to zawsze 99, sprawdź wpisane liczby.`,
@@ -788,6 +788,13 @@ if (typeof module !== 'undefined') module.exports = { planText, parseFit, fitSki
     const fallback = () => { const ta = document.createElement('textarea'); ta.value = text; document.body.appendChild(ta); ta.select(); try { document.execCommand('copy'); done(); } catch (e) { toast(L.copyFail); } ta.remove(); };
     try { navigator.clipboard.writeText(text).then(done, fallback); } catch (e) { fallback(); }
   }
+  // Saves text as a .txt file (Windows line endings, so Notepad shows the lines).
+  function download(name, text) {
+    const a = document.createElement('a');
+    a.href = URL.createObjectURL(new Blob([text.replace(/\n/g, '\r\n')], { type: 'text/plain;charset=utf-8' }));
+    a.download = name; document.body.appendChild(a); a.click(); a.remove();
+    setTimeout(() => URL.revokeObjectURL(a.href), 1000);
+  }
   const esc = s => String(s).replace(/[&<>"]/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
   const lvbar = (have, to) => '<span class="lvbar" aria-hidden="true">' + [1, 2, 3, 4, 5].map(l => `<i class="${l <= have ? 'on' : l <= to ? 'new' : ''}"></i>`).join('') + '</span>';
 
@@ -874,6 +881,7 @@ if (typeof module !== 'undefined') module.exports = { planText, parseFit, fitSki
     });
     $('queue').innerHTML = q + '</tbody>';
     $('qBtns').innerHTML = (R.blocks.length > 1 ? R.blocks.map((b, i) => `<button type="button" class="btn" data-copy="${i}">${L.copyBlock(i + 1)}</button>`).join('') : '')
+      + `<button type="button" class="btn" id="exportPlan">${L.exportPlan}</button>`
       + `<button type="button" class="btn primary" id="copyAll">${L.copyAll}</button>`;
     runFit(trained);
   }
@@ -932,6 +940,7 @@ if (typeof module !== 'undefined') module.exports = { planText, parseFit, fitSki
     const cb = e.target.closest('[data-copy]');
     if (cb && last) { copy(listText(last.blocks[+cb.dataset.copy].rows)); return; }
     if (e.target.closest('#copyAll') && last) copy(listText(last.blocks.flatMap(b => b.rows)));
+    if (e.target.closest('#exportPlan') && last) download('remap-plan.txt', planText(last, { title: L.expTitle, total: L.kPlan, base: L.kBase, cur: L.curAttrs, remap: L.tRemap, remapN: L.remapN }));
     const fc = e.target.closest('[data-fcopy]');
     if (fc && lastFit) { copy(listText(lastFit.blocks[+fc.dataset.fcopy].rows)); return; }
     if (e.target.closest('#copyGame') && lastFit) copy(listText(lastFit.blocks.flatMap(b => b.rows)));
