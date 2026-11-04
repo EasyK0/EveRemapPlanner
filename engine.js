@@ -185,6 +185,20 @@ function fmtDur(min) {
   return (d ? d + 'd ' : '') + (d || h ? h + 'h ' : '') + m + 'm';
 }
 
+// Plain-text export of a plan: plan time, then each block's attributes and its skills in order.
+// Skill lines keep the 'Name level' form, so they can be pasted back into the planner or the game.
+// lab holds the texts in the page language: title, total, base, cur, remap, remapN(n).
+function planText(R, lab) {
+  const lines = [lab.title, '', lab.total + ': ' + fmtDur(R.total) + ' (' + lab.base + ': ' + fmtDur(R.baseT) + ')'];
+  let n = 0;
+  R.blocks.forEach((b, i) => {
+    const head = !b.remap ? lab.cur : R.blocks.length > 1 ? lab.remapN(i + 1) : lab.remap;
+    lines.push('', head + ': ' + ATTRS.map(k => ANAME[k] + ' ' + b.a[k]).join(', ') + ' (' + fmtDur(b.t) + ')');
+    for (const r of b.rows) lines.push(++n + '. ' + r.it.sk.name + ' ' + r.it.lvl + ' (' + fmtDur(r.t) + ')');
+  });
+  return lines.join('\n') + '\n';
+}
+
 // ---- Support skill suggestions. when(ctx) gets the names and groups of skills in the plan. ----
 const RULES = [
   { id: 'fit', label: { pl: 'Fitowanie i cap', en: 'Fitting and capacitor' }, why: { pl: 'Bez nich brakuje CPU, PG albo capa na każdym statku', en: 'Without these you run short of CPU, powergrid or cap on every ship' },
@@ -328,4 +342,4 @@ function fitSkills(fit, tier) {
   return need;
 }
 
-if (typeof module !== 'undefined') module.exports = { parseFit, fitSkills, TYPE_BY_NAME, suggestions, RULES, parseList, buildPlan, plan, bestRemap, fmtDur, BY_ID, BY_NAME, skillByName, spFor, rateOf, REMAPS, ATTRS };
+if (typeof module !== 'undefined') module.exports = { planText, parseFit, fitSkills, TYPE_BY_NAME, suggestions, RULES, parseList, buildPlan, plan, bestRemap, fmtDur, BY_ID, BY_NAME, skillByName, spFor, rateOf, REMAPS, ATTRS };

@@ -115,3 +115,26 @@ test('durations are formatted as days, hours and minutes', () => {
   assert.equal(E.fmtDur(61), '1h 1m');
   assert.equal(E.fmtDur(5), '5m');
 });
+
+test('planText lists the remap and every queued skill in order', () => {
+  const lab = { title: 'Plan', total: 'Plan time', base: 'Without remap', cur: 'Current attributes', remap: 'Remap', remapN: n => 'Remap ' + n };
+  const p = E.plan(build('Gunnery 3\nDrones 3').items, 1, CUR, 0);
+  const lines = E.planText(p, lab).split('\n');
+  assert.equal(lines[0], 'Plan');
+  assert.equal(lines[2], `Plan time: ${E.fmtDur(p.total)} (Without remap: ${E.fmtDur(p.baseT)})`);
+  const a = p.blocks[0].a;
+  assert.equal(lines[4], `Remap: Perception ${a.P}, Memory ${a.M}, Willpower ${a.W}, Intelligence ${a.I}, Charisma ${a.C} (${E.fmtDur(p.blocks[0].t)})`);
+  const skills = lines.filter(l => /^\d+\. /.test(l)).map(l => l.replace(/^\d+\. /, '').replace(/ \(.*\)$/, ''));
+  assert.deepEqual(skills, Array.from(rowsOf(p), name));
+  assert.equal(lines.at(-1), '');
+});
+
+test('planText names the blocks for no remap and for two remaps', () => {
+  const lab = { title: 'Plan', total: 'T', base: 'B', cur: 'Current attributes', remap: 'Remap', remapN: n => 'Remap ' + n };
+  const items = build(levels('Gunnery', 5) + '\n' + levels('Drones', 5) + '\n' + levels('Leadership', 5)).items;
+  assert.ok(E.planText(E.plan(items, 0, CUR, 0), lab).includes('\nCurrent attributes: '));
+  const two = E.plan(items, 2, CUR, 0);
+  const text = E.planText(two, lab);
+  assert.equal(two.blocks.length, 2);
+  assert.ok(text.includes('Remap 1: ') && text.includes('Remap 2: '));
+});

@@ -4,6 +4,7 @@ All notable changes to Remap Planner. Adding a new version at the top publishes 
 
 ## [Unreleased]
 
+- `planText()` in the engine: the plan as plain text (plan time, each remap with its attributes, then the numbered queue as `Skill level` lines that can be pasted back), with tests.
 - Tests for `engine.js` with Node's built-in test runner (`tests/engine.test.js`): remap results, queue order with prerequisites, shortest-first order, Cybernetics first, implant limit while training Cybernetics, plan parsing, and a check that the engine copy inside `remap-planner.html` matches `engine.js`.
 - GitHub Actions workflow running the tests on Node 20 and 22 on every push.
 - Fixed: choosing 2 remaps for a plan where every skill uses the same attribute pair crashed; it now falls back to a single remap.
