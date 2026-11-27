@@ -150,3 +150,18 @@ test('fit parsing recognises implants and boosters and counts their skills', () 
   assert.equal(need.get(cyber).why, 'implant');
   assert.equal(need.get(E.skillByName('Biology').id).why, 'implant');
 });
+
+test('fitSkills adds skills picked from the suggestions with their prerequisites', () => {
+  const fit = E.parseFit('[Rifter, Test]\n200mm AutoCannon II');
+  const base = E.fitSkills(fit, 0);
+  const sk = E.skillByName('Surgical Strike');
+  assert.ok(!base.has(sk.id));
+  const need = E.fitSkills(fit, 0, [[sk.id, 4]]);
+  assert.deepEqual({ ...need.get(sk.id) }, { lvl: 4, why: 'added' });
+  for (const [r, rl] of sk.req) assert.ok(need.get(r).lvl >= rl);
+  // the suggestions for the fit no longer offer it
+  const lvl = id => (need.has(id) ? need.get(id).lvl : 0);
+  const rows = E.suggestions({ planned: need, levelOf: lvl, items: [] }).flatMap(g => g.rows.map(r => r.sk.name));
+  assert.ok(!rows.includes('Surgical Strike'));
+  assert.ok(rows.length > 0);
+});

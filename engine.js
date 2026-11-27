@@ -249,6 +249,7 @@ const RULES = [
 ];
 
 // Returns [{rule, rows:[{sk, lvl, from, why}]}] with only what the plan is missing.
+// planObj needs planned (Map with skill ids as keys), levelOf(id) and items; the Fit tab passes the fit's skills.
 function suggestions(planObj) {
   const names = new Set(), groups = new Set();
   for (const id of planObj.planned.keys()) { const sk = BY_ID.get(id); names.add(sk.name); groups.add(sk.group); }
@@ -303,8 +304,9 @@ const ELITE5 = new Set(['Gunnery', 'Drones', 'Missile Launcher Operation', 'Rapi
   'Hull Upgrades', 'Shield Management', 'Shield Upgrades', 'Shield Operation', 'Repair Systems', 'Mechanics', 'Capacitor Management', 'Capacitor Systems Operation',
   'CPU Management', 'Power Grid Management', 'Weapon Upgrades', 'Navigation', 'Evasive Maneuvering', 'Leadership', 'Thermodynamics']);
 
-// tier: 0 minimum, 1 good, 2 elite. Returns Map skillId -> {lvl, why:'ship'|'weapon'|'module'|'implant'|'support'|'req'}
-function fitSkills(fit, tier) {
+// tier: 0 minimum, 1 good, 2 elite. extra: optional [[skillId, level]] the user added from the suggestions.
+// Returns Map skillId -> {lvl, why:'ship'|'weapon'|'module'|'implant'|'support'|'added'|'req'}
+function fitSkills(fit, tier, extra) {
   const need = new Map();
   const want = (id, lvl, why) => {
     const cur = need.get(id);
@@ -339,6 +341,7 @@ function fitSkills(fit, tier) {
       }
     }
   }
+  for (const [id, l] of extra || []) if (BY_ID.has(id)) want(id, l, 'added');
   return need;
 }
 

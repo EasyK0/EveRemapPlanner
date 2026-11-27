@@ -252,6 +252,10 @@ textarea#fit { min-height: 300px; }
         <div id="fitList"></div>
         <p class="hint" data-i="gameHint"></p>
       </section>
+      <section class="panel" id="fitSgPanel" hidden>
+        <h2 data-i="missingH"></h2>
+        <div class="sg" id="fitSg"></div>
+      </section>
     </main>
     <main class="stack" id="viewPlan">
       <section class="summary" id="summary"></section>
@@ -533,6 +537,7 @@ const RULES = [
 ];
 
 // Returns [{rule, rows:[{sk, lvl, from, why}]}] with only what the plan is missing.
+// planObj needs planned (Map with skill ids as keys), levelOf(id) and items; the Fit tab passes the fit's skills.
 function suggestions(planObj) {
   const names = new Set(), groups = new Set();
   for (const id of planObj.planned.keys()) { const sk = BY_ID.get(id); names.add(sk.name); groups.add(sk.group); }
@@ -587,8 +592,9 @@ const ELITE5 = new Set(['Gunnery', 'Drones', 'Missile Launcher Operation', 'Rapi
   'Hull Upgrades', 'Shield Management', 'Shield Upgrades', 'Shield Operation', 'Repair Systems', 'Mechanics', 'Capacitor Management', 'Capacitor Systems Operation',
   'CPU Management', 'Power Grid Management', 'Weapon Upgrades', 'Navigation', 'Evasive Maneuvering', 'Leadership', 'Thermodynamics']);
 
-// tier: 0 minimum, 1 good, 2 elite. Returns Map skillId -> {lvl, why:'ship'|'weapon'|'module'|'implant'|'support'|'req'}
-function fitSkills(fit, tier) {
+// tier: 0 minimum, 1 good, 2 elite. extra: optional [[skillId, level]] the user added from the suggestions.
+// Returns Map skillId -> {lvl, why:'ship'|'weapon'|'module'|'implant'|'support'|'added'|'req'}
+function fitSkills(fit, tier, extra) {
   const need = new Map();
   const want = (id, lvl, why) => {
     const cur = need.get(id);
@@ -623,6 +629,7 @@ function fitSkills(fit, tier) {
       }
     }
   }
+  for (const [id, l] of extra || []) if (BY_ID.has(id)) want(id, l, 'added');
   return need;
 }
 
@@ -664,12 +671,13 @@ if (typeof module !== 'undefined') module.exports = { planText, parseFit, fitSki
       tabPlan: 'Plan & remap', tabFit: 'Fit → skills', fitLbl: 'Fit (EFT format)',
       fitHelp: 'In game: Fitting window, Copy to clipboard. In Pyfa: Ctrl+C.', tierLbl: 'Skill level', tier0: 'Minimum', tier1: 'Good', tier2: 'Elite',
       tierHint0: 'Everything needed to board the ship and online every module.', tierHint1: 'Ship and weapons at 4 plus support skills for what is fitted.', tierHint2: 'Key skills at 5 and T2 specialisations at 4. Long.',
-      grp: { ship: 'Ship', weapon: 'Weapons and drones', module: 'Modules', implant: 'Implants and boosters', support: 'Support skills', req: 'Prerequisites' },
+      grp: { ship: 'Ship', weapon: 'Weapons and drones', module: 'Modules', implant: 'Implants and boosters', added: 'Added by you', support: 'Support skills', req: 'Prerequisites' },
       copyGame: 'Copy for in-game skill plan', toPlanner: 'Optimise remap', kShip: 'Ship', kSkills: 'Skills to train', kTime: 'Training time',
       timeNote: 'counted from starting skills', skillsN: (n, sp) => `${n} skills, ${sp} M SP`, noFit: 'Paste a fit to see the skills it needs.',
       fitTitle: t => 'Skills for this fit: ' + t, haveIt: 'starting skill', fitUnknown: n => `Not recognised (${n}):`, fitOk: n => `${n} modules, drones, charges and implants recognised.`,
       gameHint: 'In game, create a new skill plan and paste the list. The game skips what you already have and shows the real time for your character. To optimise the remap, copy the remaining queue back into the Plan & remap tab.',
-      sentToPlan: 'Plan replaced with the fit skills',
+      sentToPlan: 'Plan replaced with the fit skills', fitNothing: 'Nothing to add: the fit already has the core support skills.',
+      fitSgHint: 'Click + to add a skill to this fit. Added skills are cleared when you paste another fit.', clearAdded: 'Remove added',
       addedT: s => 'Added ' + s, raceLbl: 'Starting skills of a new character', auto: 'Auto', off: 'Off',
       raceInfo: (r, n, a) => `${a ? 'Detected from the plan: ' : ''}${r}, ${n} starting skills count as trained (only for skills outside the plan).`, raceOff: 'Starting skills are ignored.', raceCommon: n => `No race found in the plan, so only the ${n} skills every race starts with count as trained.`, addedReq: 'Prerequisites added', switchTo: 'Polski', switchAria: 'Przełącz na polski', locale: 'en-GB',
     },
@@ -698,12 +706,13 @@ if (typeof module !== 'undefined') module.exports = { planText, parseFit, fitSki
       tabPlan: 'Plan i remap', tabFit: 'Fit → skille', fitLbl: 'Fit (format EFT)',
       fitHelp: 'W grze: okno Fitting, Copy to clipboard. W Pyfa: Ctrl+C.', tierLbl: 'Poziom skilli', tier0: 'Minimum', tier1: 'Dobrze', tier2: 'Elita',
       tierHint0: 'Wszystko, żeby wsiąść do statku i włączyć każdy moduł.', tierHint1: 'Statek i broń na 4 plus skille wspierające do tego, co masz w ficie.', tierHint2: 'Najważniejsze skille na 5, specjalizacje T2 na 4. Długo.',
-      grp: { ship: 'Statek', weapon: 'Broń i drony', module: 'Moduły', implant: 'Implanty i boostery', support: 'Skille wspierające', req: 'Wymagania' },
+      grp: { ship: 'Statek', weapon: 'Broń i drony', module: 'Moduły', implant: 'Implanty i boostery', added: 'Dodane przez ciebie', support: 'Skille wspierające', req: 'Wymagania' },
       copyGame: 'Kopiuj do planu w grze', toPlanner: 'Policz remap', kShip: 'Statek', kSkills: 'Do wytrenowania', kTime: 'Czas treningu',
       timeNote: 'liczone od skilli startowych', skillsN: (n, sp) => `${n} skilli, ${sp} mln SP`, noFit: 'Wklej fit, żeby zobaczyć potrzebne skille.',
       fitTitle: t => 'Skille do fitu: ' + t, haveIt: 'skill startowy', fitUnknown: n => `Nie rozpoznano (${n}):`, fitOk: n => `Rozpoznano ${n} modułów, dronów, amunicji i implantów.`,
       gameHint: 'W grze utwórz nowy plan skilli i wklej listę. Gra sama pominie to, co już masz, i pokaże prawdziwy czas dla twojej postaci. Żeby policzyć remap, skopiuj pozostałą kolejkę z powrotem do zakładki Plan i remap.',
-      sentToPlan: 'Plan zastąpiony skillami z fitu',
+      sentToPlan: 'Plan zastąpiony skillami z fitu', fitNothing: 'Nic do dodania: fit ma już podstawowe skille wspierające.',
+      fitSgHint: 'Kliknij +, żeby dodać skill do tego fitu. Dodane skille znikają po wklejeniu innego fitu.', clearAdded: 'Usuń dodane',
       addedT: s => 'Dodano ' + s, raceLbl: 'Skille startowe nowej postaci', auto: 'Auto', off: 'Wyłącz',
       raceInfo: (r, n, a) => `${a ? 'Rozpoznano z planu: ' : ''}${r}, ${n} skilli startowych liczę jako wytrenowane (tylko dla skilli spoza planu).`, raceOff: 'Skille startowe są pomijane.', raceCommon: n => `W planie nie ma rasy, więc jako wytrenowane liczę tylko ${n} skilli, z którymi startuje każda rasa.`, addedReq: 'Dodano wymagania', switchTo: 'English', switchAria: 'Switch to English', locale: 'pl-PL',
     },
@@ -722,6 +731,7 @@ if (typeof module !== 'undefined') module.exports = { planText, parseFit, fitSki
   $('plan').value = store.get('plan', SAMPLE);
   $('trained').value = store.get('trained', '');
   $('fit').value = store.get('fit', '');
+  let fitAdd = store.get('fitAdd', []); // [[skillId, level]] added to the fit from the suggestions
   if ($('trained').value.trim()) $('trainedBox').open = true;
 
   function applyLang() {
@@ -777,7 +787,7 @@ if (typeof module !== 'undefined') module.exports = { planText, parseFit, fitSki
   }
 
   let tmr;
-  ['plan', 'trained', 'fit'].forEach(id => $(id).addEventListener('input', () => { clearTimeout(tmr); tmr = setTimeout(() => { store.set(id, $(id).value); run(); }, 250); }));
+  ['plan', 'trained', 'fit'].forEach(id => $(id).addEventListener('input', () => { clearTimeout(tmr); tmr = setTimeout(() => { if (id === 'fit' && fitAdd.length) { fitAdd = []; store.set('fitAdd', fitAdd); } store.set(id, $(id).value); run(); }, 250); }));
 
   function toast(msg) {
     const t = document.createElement('div'); t.className = 'toast'; t.textContent = msg; t.setAttribute('role', 'status');
@@ -895,12 +905,13 @@ if (typeof module !== 'undefined') module.exports = { planText, parseFit, fitSki
       $('fitInfo').textContent = L.fitHelp;
       $('fitSummary').innerHTML = `<div style="grid-column:1/-1"><div class="n">${L.noFit}</div></div>`;
       $('fitTitle').textContent = ''; $('fitList').innerHTML = ''; $('fBtns').innerHTML = '';
+      $('fitSg').innerHTML = ''; $('fitSgPanel').hidden = true;
       return;
     }
     let info = L.fitOk(f.types.length);
     if (f.unknown.length) info += ` <span style="color:var(--bad)">${L.fitUnknown(f.unknown.length)} ${esc(f.unknown.slice(0, 3).join(', '))}${f.unknown.length > 3 ? '…' : ''}</span>`;
     $('fitInfo').innerHTML = info + '<br>' + L.fitHelp;
-    const need = fitSkills(f, state.tier);
+    const need = fitSkills(f, state.tier, fitAdd);
     const st = starterFor([...need.keys()].map(id => ({ id, lvl: 1 })));
     if (state.tab === 'fit') $('raceInfo').textContent = st.info;
     const have = id => Math.max(trainedUser.get(id) || 0, st.map.get(id) || 0);
@@ -920,7 +931,7 @@ if (typeof module !== 'undefined') module.exports = { planText, parseFit, fitSki
       + (R.blocks.length > 1 ? R.blocks.map((b, i) => `<button type="button" class="btn" data-fcopy="${i}">${L.copyBlock(i + 1)}</button>`).join('') : '')
       + `<button type="button" class="btn primary" id="copyGame">${L.copyGame}</button>`;
     let html = '';
-    for (const g of ['ship', 'weapon', 'module', 'implant', 'support', 'req']) {
+    for (const g of ['ship', 'weapon', 'module', 'implant', 'support', 'added', 'req']) {
       const list = [...need].filter(([, v]) => v.why === g).sort((a, b) => (tBySkill.get(b[0]) || 0) - (tBySkill.get(a[0]) || 0));
       if (!list.length) continue;
       html += `<div class="fitgrp"><h3>${L.grp[g]}</h3>`;
@@ -931,6 +942,22 @@ if (typeof module !== 'undefined') module.exports = { planText, parseFit, fitSki
       html += '</div>';
     }
     $('fitList').innerHTML = html;
+
+    // Suggestions: the same support rules as the Plan tab, checked against the skills this fit needs.
+    const lvlOf = id => Math.max(need.has(id) ? need.get(id).lvl : 0, have(id));
+    const refA = R.blocks[0] ? R.blocks[0].a : state.cur;
+    const tFor = (sk, from, to) => { let t = 0; for (let x = from; x <= to; x++) t += spFor(sk, x) / rateOf(sk, refA, state.imp); return t; };
+    let sg = '';
+    for (const g of suggestions({ planned: need, levelOf: lvlOf, items: [] })) {
+      sg += `<div class="sg-group"><div class="sg-head"><span class="t">${esc(g.rule.label[state.lang])}</span><span class="w">${esc(g.rule.why[state.lang])}</span></div>`;
+      for (const r of g.rows) sg += `<div class="sg-row"><button type="button" class="plus" data-fadd="${r.sk.id}:${r.lvl}" aria-label="+ ${esc(r.sk.name)}">+</button>
+        <div class="nm">${esc(r.sk.name)} <span style="font-family:var(--f-mono);color:var(--accent)">${ROM[r.lvl]}</span>${lvbar(r.from - 1, r.lvl)}<small>${r.from > 1 ? L.have(ROM[r.from - 1]) : ''}${SHORT[r.sk.p]}/${SHORT[r.sk.s]}, ${L.rank} ${r.sk.rank}</small></div>
+        <span class="tm">+${fmtDur(tFor(r.sk, r.from, r.lvl))}</span></div>`;
+      sg += '</div>';
+    }
+    const clear = fitAdd.length ? ` <button type="button" class="btn small" id="fitClearAdded">${L.clearAdded}</button>` : '';
+    $('fitSg').innerHTML = (sg ? sg + `<p class="hint">${L.fitSgHint}${clear}</p>` : `<p class="empty">${L.fitNothing}</p>${clear ? `<p class="hint">${clear}</p>` : ''}`);
+    $('fitSgPanel').hidden = false;
   }
 
   const listText = rows => rows.map(r => r.it.sk.name + ' ' + r.it.lvl).join('\n');
@@ -941,6 +968,13 @@ if (typeof module !== 'undefined') module.exports = { planText, parseFit, fitSki
     if (cb && last) { copy(listText(last.blocks[+cb.dataset.copy].rows)); return; }
     if (e.target.closest('#copyAll') && last) copy(listText(last.blocks.flatMap(b => b.rows)));
     if (e.target.closest('#exportPlan') && last) download('remap-plan.txt', planText(last, { title: L.expTitle, total: L.kPlan, base: L.kBase, cur: L.curAttrs, remap: L.tRemap, remapN: L.remapN }));
+    const fa = e.target.closest('[data-fadd]');
+    if (fa) {
+      const [id, lvl] = fa.dataset.fadd.split(':').map(Number);
+      fitAdd = fitAdd.filter(([x]) => x !== id).concat([[id, lvl]]); store.set('fitAdd', fitAdd);
+      run(); toast(L.addedT(BY_ID.get(id).name + ' ' + ROM[lvl])); return;
+    }
+    if (e.target.closest('#fitClearAdded')) { fitAdd = []; store.set('fitAdd', fitAdd); run(); return; }
     const fc = e.target.closest('[data-fcopy]');
     if (fc && lastFit) { copy(listText(lastFit.blocks[+fc.dataset.fcopy].rows)); return; }
     if (e.target.closest('#copyGame') && lastFit) copy(listText(lastFit.blocks.flatMap(b => b.rows)));

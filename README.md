@@ -16,7 +16,7 @@ A skill-plan optimizer for EVE Online. Paste a skill plan or a ship fit and it f
 - **Two-remap split.** Decides which skills go before and after the second remap, without ever training a skill before its prerequisites.
 - **Smart queue order.** Shortest skills first, prerequisites always earlier, and Cybernetics first so implants can go in as soon as possible.
 - **Missing skills.** Lists prerequisites the plan forgot and suggests support skills (fitting, capacitor, drones and so on), each one click away from the plan.
-- **Fit → skills.** Paste an EFT fit (from the game or Pyfa) and get the skills it needs at three levels: *Minimum*, *Good* or *Elite*.
+- **Fit → skills.** Paste an EFT fit (from the game or Pyfa) and get the skills it needs at three levels: *Minimum*, *Good* or *Elite*. Suggested support skills for the fit are one click away too.
 - **Back to the game.** One click copies the result in the in-game skill plan format.
 - English and Polish UI. Inputs are kept in `localStorage`.
 
