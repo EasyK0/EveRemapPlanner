@@ -4,6 +4,7 @@ All notable changes to Remap Planner. Adding a new version at the top publishes 
 
 ## [Unreleased]
 
+- Fit tab: ship profiles. "+ New ship" starts an empty profile and the earlier ships stay; pick one from the list to switch, give it a name or keep the automatic one (ship and fit name), or delete it. Each profile keeps its fit, skill level, added and lowered skills in the browser. With two or more ships, "Plan the whole fleet" puts the skills for all of them (the highest level any ship needs) into the Plan tab.
 - Fit tab: the skill list is in alphabetical order, so a row stays in place when you lower or raise it. Only the suggestions are sorted by training time.
 - Micro Jump Drive Operation IV is suggested for every ship (Plan and Fit tabs). It is only a suggestion and is not added by Good or Elite.
 - Fit tab: a − button next to each skill lowers it by one level (and + raises it back). It cannot go below what the fitted items or another skill in the list need, for example Gallente Cruiser stays at III while Gallente Battleship is in the list; clicking it then says what needs it. "Undo changes" resets added and lowered skills.

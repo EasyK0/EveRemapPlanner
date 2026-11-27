@@ -230,3 +230,19 @@ test('Micro Jump Drive Operation is suggested for ships but not added by Good or
     assert.equal(rows.find(r => r.sk.id === mjd).lvl, 4);
   }
 });
+
+test('fleetSkills takes the highest level any saved ship needs', () => {
+  const kronos = { fit: '[Kronos, A]', tier: 0, add: [], cap: [] };
+  const rifter = { fit: '[Rifter, B]\n200mm AutoCannon II', tier: 1, add: [], cap: [] };
+  const empty = { fit: '', tier: 1 };
+  const F = E.fleetSkills([kronos, rifter, empty]);
+  assert.equal(F.ships, 2);
+  for (const p of [kronos, rifter]) {
+    const fit = E.parseFit(p.fit);
+    for (const [id, v] of E.fitSkills(fit, p.tier)) assert.ok(F.need.get(id) >= v.lvl);
+  }
+  // a lowered level in one profile is respected
+  const mar = E.skillByName('Marauders').id;
+  const k1 = { ...kronos, tier: 1 };
+  assert.equal(E.fleetSkills([{ ...k1, cap: [[mar, 2]] }]).need.get(mar), 2);
+});
