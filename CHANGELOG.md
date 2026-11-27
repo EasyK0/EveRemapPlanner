@@ -4,6 +4,7 @@ All notable changes to Remap Planner. Adding a new version at the top publishes 
 
 ## [Unreleased]
 
+- Fit tab suggestions also offer the next skill level: at Minimum what Good adds, at Good what Elite adds, and at Elite the fit's skills still below V. Before this, Good and Elite usually showed "Nothing to add".
 - Fit tab: a "You may be missing" panel suggests support skills (fitting, navigation, targeting, weapon and drone support, Cybernetics) for the fit, using the same rules as the Plan tab. Click + to add one to the fit; added skills appear in an "Added by you" group with their prerequisites and are cleared when another fit is pasted.
 - Pages workflow: upload and deploy run in separate jobs, so the deploy no longer fails with "No artifacts named github-pages".
 - Fit tab: implants and boosters from an EFT or Pyfa fit (1,308 types, category 20 from the SDE) are now recognised instead of being listed as "Not recognised". Their required skills, such as Cybernetics and Biology, show in a new "Implants and boosters" group, with a test.

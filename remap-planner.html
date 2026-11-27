@@ -633,6 +633,19 @@ function fitSkills(fit, tier, extra) {
   return need;
 }
 
+// Next step up for a fit: what the next skill level (Minimum -> Good -> Elite) adds,
+// or at Elite the skills the fit uses that are still below V. Returns [{sk, lvl, cur}].
+function fitUpgrades(fit, tier, extra) {
+  const need = fitSkills(fit, tier, extra), out = [];
+  const curOf = id => (need.has(id) ? need.get(id).lvl : 0);
+  if (tier < 2) {
+    for (const [id, v] of fitSkills(fit, tier + 1, extra)) if (v.lvl > curOf(id)) out.push({ sk: BY_ID.get(id), lvl: v.lvl, cur: curOf(id) });
+  } else {
+    for (const [id, v] of need) if (v.why !== 'req' && v.lvl < 5) out.push({ sk: BY_ID.get(id), lvl: 5, cur: v.lvl });
+  }
+  return out;
+}
+
 if (typeof module !== 'undefined') module.exports = { planText, parseFit, fitSkills, TYPE_BY_NAME, suggestions, RULES, parseList, buildPlan, plan, bestRemap, fmtDur, BY_ID, BY_NAME, skillByName, spFor, rateOf, REMAPS, ATTRS };
 
 </script>
@@ -676,7 +689,7 @@ if (typeof module !== 'undefined') module.exports = { planText, parseFit, fitSki
       timeNote: 'counted from starting skills', skillsN: (n, sp) => `${n} skills, ${sp} M SP`, noFit: 'Paste a fit to see the skills it needs.',
       fitTitle: t => 'Skills for this fit: ' + t, haveIt: 'starting skill', fitUnknown: n => `Not recognised (${n}):`, fitOk: n => `${n} modules, drones, charges and implants recognised.`,
       gameHint: 'In game, create a new skill plan and paste the list. The game skips what you already have and shows the real time for your character. To optimise the remap, copy the remaining queue back into the Plan & remap tab.',
-      sentToPlan: 'Plan replaced with the fit skills', fitNothing: 'Nothing to add: the fit already has the core support skills.',
+      sentToPlan: 'Plan replaced with the fit skills', fitNothing: 'Nothing to add: the fit already has the core support skills.', upH: t => 'Next level: ' + t, upW: 'What the next skill level adds for this fit', upW5: 'Skills this fit uses, trained to V',
       fitSgHint: 'Click + to add a skill to this fit. Added skills are cleared when you paste another fit.', clearAdded: 'Remove added',
       addedT: s => 'Added ' + s, raceLbl: 'Starting skills of a new character', auto: 'Auto', off: 'Off',
       raceInfo: (r, n, a) => `${a ? 'Detected from the plan: ' : ''}${r}, ${n} starting skills count as trained (only for skills outside the plan).`, raceOff: 'Starting skills are ignored.', raceCommon: n => `No race found in the plan, so only the ${n} skills every race starts with count as trained.`, addedReq: 'Prerequisites added', switchTo: 'Polski', switchAria: 'Przełącz na polski', locale: 'en-GB',
@@ -711,7 +724,7 @@ if (typeof module !== 'undefined') module.exports = { planText, parseFit, fitSki
       timeNote: 'liczone od skilli startowych', skillsN: (n, sp) => `${n} skilli, ${sp} mln SP`, noFit: 'Wklej fit, żeby zobaczyć potrzebne skille.',
       fitTitle: t => 'Skille do fitu: ' + t, haveIt: 'skill startowy', fitUnknown: n => `Nie rozpoznano (${n}):`, fitOk: n => `Rozpoznano ${n} modułów, dronów, amunicji i implantów.`,
       gameHint: 'W grze utwórz nowy plan skilli i wklej listę. Gra sama pominie to, co już masz, i pokaże prawdziwy czas dla twojej postaci. Żeby policzyć remap, skopiuj pozostałą kolejkę z powrotem do zakładki Plan i remap.',
-      sentToPlan: 'Plan zastąpiony skillami z fitu', fitNothing: 'Nic do dodania: fit ma już podstawowe skille wspierające.',
+      sentToPlan: 'Plan zastąpiony skillami z fitu', fitNothing: 'Nic do dodania: fit ma już podstawowe skille wspierające.', upH: t => 'Wyższy poziom: ' + t, upW: 'Co dodaje następny poziom skilli dla tego fitu', upW5: 'Skille z tego fitu wytrenowane na V',
       fitSgHint: 'Kliknij +, żeby dodać skill do tego fitu. Dodane skille znikają po wklejeniu innego fitu.', clearAdded: 'Usuń dodane',
       addedT: s => 'Dodano ' + s, raceLbl: 'Skille startowe nowej postaci', auto: 'Auto', off: 'Wyłącz',
       raceInfo: (r, n, a) => `${a ? 'Rozpoznano z planu: ' : ''}${r}, ${n} skilli startowych liczę jako wytrenowane (tylko dla skilli spoza planu).`, raceOff: 'Skille startowe są pomijane.', raceCommon: n => `W planie nie ma rasy, więc jako wytrenowane liczę tylko ${n} skilli, z którymi startuje każda rasa.`, addedReq: 'Dodano wymagania', switchTo: 'English', switchAria: 'Switch to English', locale: 'pl-PL',
@@ -948,11 +961,23 @@ if (typeof module !== 'undefined') module.exports = { planText, parseFit, fitSki
     const refA = R.blocks[0] ? R.blocks[0].a : state.cur;
     const tFor = (sk, from, to) => { let t = 0; for (let x = from; x <= to; x++) t += spFor(sk, x) / rateOf(sk, refA, state.imp); return t; };
     let sg = '';
-    for (const g of suggestions({ planned: need, levelOf: lvlOf, items: [] })) {
-      sg += `<div class="sg-group"><div class="sg-head"><span class="t">${esc(g.rule.label[state.lang])}</span><span class="w">${esc(g.rule.why[state.lang])}</span></div>`;
-      for (const r of g.rows) sg += `<div class="sg-row"><button type="button" class="plus" data-fadd="${r.sk.id}:${r.lvl}" aria-label="+ ${esc(r.sk.name)}">+</button>
+    const seen = new Set();
+    const sgRow = r => `<div class="sg-row"><button type="button" class="plus" data-fadd="${r.sk.id}:${r.lvl}" aria-label="+ ${esc(r.sk.name)}">+</button>
         <div class="nm">${esc(r.sk.name)} <span style="font-family:var(--f-mono);color:var(--accent)">${ROM[r.lvl]}</span>${lvbar(r.from - 1, r.lvl)}<small>${r.from > 1 ? L.have(ROM[r.from - 1]) : ''}${SHORT[r.sk.p]}/${SHORT[r.sk.s]}, ${L.rank} ${r.sk.rank}</small></div>
         <span class="tm">+${fmtDur(tFor(r.sk, r.from, r.lvl))}</span></div>`;
+    for (const g of suggestions({ planned: need, levelOf: lvlOf, items: [] })) {
+      sg += `<div class="sg-group"><div class="sg-head"><span class="t">${esc(g.rule.label[state.lang])}</span><span class="w">${esc(g.rule.why[state.lang])}</span></div>`;
+      for (const r of g.rows) { seen.add(r.sk.id); sg += sgRow(r); }
+      sg += '</div>';
+    }
+    // The next skill level up, so Good and Elite have something to offer too.
+    const ups = fitUpgrades(f, state.tier, fitAdd)
+      .map(u => ({ sk: u.sk, lvl: u.lvl, from: Math.max(u.cur, have(u.sk.id)) + 1 }))
+      .filter(u => u.from <= u.lvl && !seen.has(u.sk.id))
+      .sort((a, b) => tFor(a.sk, a.from, a.lvl) - tFor(b.sk, b.from, b.lvl));
+    if (ups.length) {
+      sg += `<div class="sg-group"><div class="sg-head"><span class="t">${esc(state.tier < 2 ? L.upH(L['tier' + (state.tier + 1)]) : L.upH('V'))}</span><span class="w">${esc(state.tier < 2 ? L.upW : L.upW5)}</span></div>`;
+      for (const r of ups) sg += sgRow(r);
       sg += '</div>';
     }
     const clear = fitAdd.length ? ` <button type="button" class="btn small" id="fitClearAdded">${L.clearAdded}</button>` : '';
