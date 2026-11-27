@@ -488,6 +488,8 @@ function planText(R, lab) {
 }
 
 // ---- Support skill suggestions. when(ctx) gets the names and groups of skills in the plan. ----
+// A suggestion goes up to IV in one step; V (long) is offered on its own after IV.
+const stepTo = (from, lvl) => Math.min(lvl, Math.max(from, 4));
 const RULES = [
   { id: 'fit', label: { pl: 'Fitowanie i cap', en: 'Fitting and capacitor' }, why: { pl: 'Bez nich brakuje CPU, PG albo capa na każdym statku', en: 'Without these you run short of CPU, powergrid or cap on every ship' },
     when: c => c.groups.has('Spaceship Command'),
@@ -552,7 +554,7 @@ function suggestions(planObj) {
       const have = planObj.levelOf(sk.id);
       if (have >= lvl || seen.has(sk.id)) continue;
       seen.add(sk.id);
-      rows.push({ sk, lvl, from: have + 1 });
+      rows.push({ sk, lvl: stepTo(have + 1, lvl), from: have + 1 });
     }
     if (rows.length) out.push({ rule: r, rows });
   }
@@ -972,7 +974,7 @@ if (typeof module !== 'undefined') module.exports = { planText, parseFit, fitSki
     }
     // The next skill level up, so Good and Elite have something to offer too.
     const ups = fitUpgrades(f, state.tier, fitAdd)
-      .map(u => ({ sk: u.sk, lvl: u.lvl, from: Math.max(u.cur, have(u.sk.id)) + 1 }))
+      .map(u => { const from = Math.max(u.cur, have(u.sk.id)) + 1; return { sk: u.sk, lvl: stepTo(from, u.lvl), from }; })
       .filter(u => u.from <= u.lvl && !seen.has(u.sk.id))
       .sort((a, b) => tFor(a.sk, a.from, a.lvl) - tFor(b.sk, b.from, b.lvl));
     if (ups.length) {

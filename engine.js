@@ -200,6 +200,8 @@ function planText(R, lab) {
 }
 
 // ---- Support skill suggestions. when(ctx) gets the names and groups of skills in the plan. ----
+// A suggestion goes up to IV in one step; V (long) is offered on its own after IV.
+const stepTo = (from, lvl) => Math.min(lvl, Math.max(from, 4));
 const RULES = [
   { id: 'fit', label: { pl: 'Fitowanie i cap', en: 'Fitting and capacitor' }, why: { pl: 'Bez nich brakuje CPU, PG albo capa na każdym statku', en: 'Without these you run short of CPU, powergrid or cap on every ship' },
     when: c => c.groups.has('Spaceship Command'),
@@ -264,7 +266,7 @@ function suggestions(planObj) {
       const have = planObj.levelOf(sk.id);
       if (have >= lvl || seen.has(sk.id)) continue;
       seen.add(sk.id);
-      rows.push({ sk, lvl, from: have + 1 });
+      rows.push({ sk, lvl: stepTo(have + 1, lvl), from: have + 1 });
     }
     if (rows.length) out.push({ rule: r, rows });
   }
@@ -358,4 +360,4 @@ function fitUpgrades(fit, tier, extra) {
   return out;
 }
 
-if (typeof module !== 'undefined') module.exports = { planText, parseFit, fitSkills, fitUpgrades, TYPE_BY_NAME, suggestions, RULES, parseList, buildPlan, plan, bestRemap, fmtDur, BY_ID, BY_NAME, skillByName, spFor, rateOf, REMAPS, ATTRS };
+if (typeof module !== 'undefined') module.exports = { stepTo, planText, parseFit, fitSkills, fitUpgrades, TYPE_BY_NAME, suggestions, RULES, parseList, buildPlan, plan, bestRemap, fmtDur, BY_ID, BY_NAME, skillByName, spFor, rateOf, REMAPS, ATTRS };
