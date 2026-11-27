@@ -182,3 +182,18 @@ test('fitUpgrades offers the next skill level, and V at Elite', () => {
   assert.ok(elite.length > 0);
   for (const u of elite) assert.ok(u.lvl === 5 && u.cur < 5);
 });
+
+test('suggestions go up to IV first and offer V as a separate step', () => {
+  assert.equal(E.stepTo(4, 5), 4);
+  assert.equal(E.stepTo(1, 5), 4);
+  assert.equal(E.stepTo(5, 5), 5);
+  assert.equal(E.stepTo(1, 3), 3);
+  const gun = E.skillByName('Gunnery'); // the turret rule wants Gunnery V
+  const sugg = lvl => {
+    const P = build('Small Projectile Turret 1\nGunnery ' + lvl);
+    return E.suggestions(P).flatMap(g => g.rows).find(r => r.sk.id === gun.id);
+  };
+  assert.equal(sugg(3).lvl, 4);
+  assert.equal(sugg(4).lvl, 5);
+  assert.equal(sugg(5), undefined);
+});
