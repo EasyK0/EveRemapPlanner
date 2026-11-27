@@ -165,3 +165,20 @@ test('fitSkills adds skills picked from the suggestions with their prerequisites
   assert.ok(!rows.includes('Surgical Strike'));
   assert.ok(rows.length > 0);
 });
+
+test('fitUpgrades offers the next skill level, and V at Elite', () => {
+  const fit = E.parseFit('[Rifter, Test]\n200mm AutoCannon II\nGyrostabilizer II');
+  for (const tier of [0, 1]) {
+    const need = E.fitSkills(fit, tier), next = E.fitSkills(fit, tier + 1);
+    const ups = E.fitUpgrades(fit, tier);
+    assert.ok(ups.length > 0);
+    for (const u of ups) {
+      assert.equal(u.lvl, next.get(u.sk.id).lvl);
+      assert.equal(u.cur, need.has(u.sk.id) ? need.get(u.sk.id).lvl : 0);
+      assert.ok(u.lvl > u.cur);
+    }
+  }
+  const elite = E.fitUpgrades(fit, 2);
+  assert.ok(elite.length > 0);
+  for (const u of elite) assert.ok(u.lvl === 5 && u.cur < 5);
+});

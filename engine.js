@@ -345,4 +345,17 @@ function fitSkills(fit, tier, extra) {
   return need;
 }
 
-if (typeof module !== 'undefined') module.exports = { planText, parseFit, fitSkills, TYPE_BY_NAME, suggestions, RULES, parseList, buildPlan, plan, bestRemap, fmtDur, BY_ID, BY_NAME, skillByName, spFor, rateOf, REMAPS, ATTRS };
+// Next step up for a fit: what the next skill level (Minimum -> Good -> Elite) adds,
+// or at Elite the skills the fit uses that are still below V. Returns [{sk, lvl, cur}].
+function fitUpgrades(fit, tier, extra) {
+  const need = fitSkills(fit, tier, extra), out = [];
+  const curOf = id => (need.has(id) ? need.get(id).lvl : 0);
+  if (tier < 2) {
+    for (const [id, v] of fitSkills(fit, tier + 1, extra)) if (v.lvl > curOf(id)) out.push({ sk: BY_ID.get(id), lvl: v.lvl, cur: curOf(id) });
+  } else {
+    for (const [id, v] of need) if (v.why !== 'req' && v.lvl < 5) out.push({ sk: BY_ID.get(id), lvl: 5, cur: v.lvl });
+  }
+  return out;
+}
+
+if (typeof module !== 'undefined') module.exports = { planText, parseFit, fitSkills, fitUpgrades, TYPE_BY_NAME, suggestions, RULES, parseList, buildPlan, plan, bestRemap, fmtDur, BY_ID, BY_NAME, skillByName, spFor, rateOf, REMAPS, ATTRS };
