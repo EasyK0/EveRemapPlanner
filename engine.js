@@ -245,6 +245,16 @@ const RULES = [
       if (c.names.has('Command Ships')) a.push(['Wing Command', 4]);
       return a;
     } },
+  { id: 'ewar', label: { pl: 'Moduły EWAR', en: 'Electronic warfare' }, why: { pl: 'Mocniejsze paintery, disruptory, dampy i jammery z fitu', en: 'Stronger painters, disruptors, dampeners and jammers from the fit' },
+    when: c => ['Target Painting', 'Weapon Disruption', 'Sensor Linking', 'Electronic Warfare'].some(n => c.names.has(n)),
+    add: c => {
+      const a = [];
+      if (c.names.has('Target Painting')) a.push(['Target Painting', 4], ['Signature Focusing', 4]);
+      if (c.names.has('Weapon Disruption')) a.push(['Weapon Disruption', 4], ['Weapon Destabilization', 4]);
+      if (c.names.has('Sensor Linking')) a.push(['Sensor Linking', 4], ['Signal Suppression', 4]);
+      if (c.names.has('Electronic Warfare')) a.push(['Electronic Warfare', 4], ['Signal Dispersion', 4], ['Long Distance Jamming', 3], ['Frequency Modulation', 3]);
+      return a;
+    } },
   { id: 'mjd', label: { pl: 'Micro Jump Drive', en: 'Micro Jump Drive' }, why: { pl: 'Szybszy MJD: ucieczka z bubli, dystans od celu', en: 'Faster MJD: out of bubbles, range from the target' },
     when: c => c.groups.has('Spaceship Command'), suggestOnly: true,
     add: [['Micro Jump Drive Operation', 4]] },

@@ -231,6 +231,16 @@ test('Micro Jump Drive Operation is suggested for ships but not added by Good or
   }
 });
 
+test('a target painter in the fit brings Signature Focusing', () => {
+  const fit = E.parseFit('[Damnation, Test]\nTarget Painter II');
+  const sf = E.skillByName('Signature Focusing').id;
+  assert.ok(!E.fitSkills(fit, 0).has(sf));
+  assert.ok(E.fitSkills(fit, 1).get(sf).lvl >= 4);
+  const plain = E.parseFit('[Damnation, Test]');
+  const need = E.fitSkills(plain, 1);
+  assert.ok(!need.has(sf));
+});
+
 test('fleetSkills takes the highest level any saved ship needs', () => {
   const kronos = { fit: '[Kronos, A]', tier: 0, add: [], cap: [] };
   const rifter = { fit: '[Rifter, B]\n200mm AutoCannon II', tier: 1, add: [], cap: [] };
