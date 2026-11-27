@@ -347,6 +347,34 @@ function fitSkills(fit, tier, extra) {
   return need;
 }
 
+// Levels a fit cannot go below: what the fitted items need and what the other skills need.
+// lvl: Map skillId -> level. Returns Map skillId -> {lvl, by: Set of names}.
+function fitFloors(fit, lvl) {
+  const fl = new Map();
+  const bump = (id, l, name) => {
+    const c = fl.get(id) || { lvl: 0, by: new Set() };
+    if (l > c.lvl) { c.lvl = l; c.by = new Set([name]); } else if (l === c.lvl) c.by.add(name);
+    fl.set(id, c);
+  };
+  for (const t of [fit.ship, ...fit.types]) if (t) for (const [id, l] of t.req) bump(id, l, t.name);
+  for (const [id, l] of lvl) if (l > 0) for (const [r, rl] of BY_ID.get(id).req) bump(r, rl, BY_ID.get(id).name);
+  return fl;
+}
+
+// Applies the levels the user lowered (caps: [[skillId, level]]) to a fitSkills() result,
+// never below fitFloors(). Skills lowered to 0 are dropped. Returns {need, floor}.
+function fitCapped(fit, need, caps) {
+  const lvl = new Map([...need].map(([id, v]) => [id, v.lvl]));
+  for (const [id, c] of caps || []) if (lvl.has(id)) lvl.set(id, Math.min(lvl.get(id), c));
+  for (let changed = true; changed;) {
+    changed = false;
+    for (const [id, f] of fitFloors(fit, lvl)) if ((lvl.get(id) || 0) < f.lvl) { lvl.set(id, f.lvl); changed = true; }
+  }
+  const out = new Map();
+  for (const [id, l] of lvl) if (l > 0) out.set(id, { ...need.get(id), lvl: l, lowered: l < need.get(id).lvl });
+  return { need: out, floor: fitFloors(fit, lvl) };
+}
+
 // Next step up for a fit: what the next skill level (Minimum -> Good -> Elite) adds,
 // or at Elite the skills the fit uses that are still below V. Returns [{sk, lvl, cur}].
 function fitUpgrades(fit, tier, extra) {
@@ -360,4 +388,4 @@ function fitUpgrades(fit, tier, extra) {
   return out;
 }
 
-if (typeof module !== 'undefined') module.exports = { stepTo, planText, parseFit, fitSkills, fitUpgrades, TYPE_BY_NAME, suggestions, RULES, parseList, buildPlan, plan, bestRemap, fmtDur, BY_ID, BY_NAME, skillByName, spFor, rateOf, REMAPS, ATTRS };
+if (typeof module !== 'undefined') module.exports = { fitFloors, fitCapped, stepTo, planText, parseFit, fitSkills, fitUpgrades, TYPE_BY_NAME, suggestions, RULES, parseList, buildPlan, plan, bestRemap, fmtDur, BY_ID, BY_NAME, skillByName, spFor, rateOf, REMAPS, ATTRS };

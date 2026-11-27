@@ -197,3 +197,24 @@ test('suggestions go up to IV first and offer V as a separate step', () => {
   assert.equal(sugg(4).lvl, 5);
   assert.equal(sugg(5), undefined);
 });
+
+test('fitCapped lowers a skill but never below what the fit or another skill needs', () => {
+  const fit = E.parseFit('[Kronos, Test]');
+  const full = E.fitSkills(fit, 1);
+  const id = n => E.skillByName(n).id;
+  const mar = id('Marauders'), gbs = id('Gallente Battleship'), gcr = id('Gallente Battlecruiser');
+  assert.ok(full.get(mar).lvl >= 4);
+  // Marauders 4 -> 3 is allowed (the Kronos itself only needs level 1)
+  const a = E.fitCapped(fit, full, [[mar, 3]]);
+  assert.equal(a.need.get(mar).lvl, 3);
+  assert.equal(a.need.get(mar).lowered, true);
+  // Gallente Battlecruiser cannot go below what Gallente Battleship needs
+  const need = E.skillByName('Gallente Battleship').req.find(([r]) => r === gcr)[1];
+  const b = E.fitCapped(fit, full, [[gcr, 0]]);
+  assert.equal(b.need.get(gcr).lvl, need);
+  assert.equal(b.floor.get(gcr).lvl, need);
+  assert.ok(b.floor.get(gcr).by.has('Gallente Battleship'));
+  // the ship's own requirement holds too
+  const shipReq = fit.ship.req.find(([r]) => r === gbs)[1];
+  assert.equal(E.fitCapped(fit, full, [[gbs, 0]]).need.get(gbs).lvl, shipReq);
+});

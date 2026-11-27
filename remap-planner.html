@@ -96,6 +96,9 @@ details[open] summary { margin-bottom: 8px; }
 .sg-row .tm { font: 12.5px var(--f-mono); color: var(--muted); font-variant-numeric: tabular-nums; }
 .plus { width: 28px; height: 28px; border-radius: 50%; border: 1px solid var(--teal); background: var(--teal-soft); color: var(--teal); font: 600 17px/1 var(--f-mono); cursor: pointer; display: grid; place-items: center; }
 .plus:hover { background: var(--teal); color: var(--panel); }
+.lvbtn { width: 22px; height: 22px; border-radius: 50%; border: 1px solid var(--line); background: transparent; color: var(--muted); font: 600 14px/1 var(--f-mono); cursor: pointer; display: inline-grid; place-items: center; margin-left: 6px; vertical-align: middle; }
+.lvbtn:hover:not([aria-disabled]) { border-color: var(--accent); color: var(--accent); }
+.lvbtn[aria-disabled] { opacity: .35; cursor: not-allowed; }
 .chip { display: inline-block; font: 600 10.5px var(--f-body); letter-spacing: .04em; text-transform: uppercase; padding: 2px 6px; border-radius: 3px; vertical-align: 1px; }
 .chip.must { background: var(--warn-soft); color: var(--warn); }
 .chip.check { background: var(--sunk); color: var(--muted); border: 1px solid var(--line); }
@@ -639,6 +642,34 @@ function fitSkills(fit, tier, extra) {
   return need;
 }
 
+// Levels a fit cannot go below: what the fitted items need and what the other skills need.
+// lvl: Map skillId -> level. Returns Map skillId -> {lvl, by: Set of names}.
+function fitFloors(fit, lvl) {
+  const fl = new Map();
+  const bump = (id, l, name) => {
+    const c = fl.get(id) || { lvl: 0, by: new Set() };
+    if (l > c.lvl) { c.lvl = l; c.by = new Set([name]); } else if (l === c.lvl) c.by.add(name);
+    fl.set(id, c);
+  };
+  for (const t of [fit.ship, ...fit.types]) if (t) for (const [id, l] of t.req) bump(id, l, t.name);
+  for (const [id, l] of lvl) if (l > 0) for (const [r, rl] of BY_ID.get(id).req) bump(r, rl, BY_ID.get(id).name);
+  return fl;
+}
+
+// Applies the levels the user lowered (caps: [[skillId, level]]) to a fitSkills() result,
+// never below fitFloors(). Skills lowered to 0 are dropped. Returns {need, floor}.
+function fitCapped(fit, need, caps) {
+  const lvl = new Map([...need].map(([id, v]) => [id, v.lvl]));
+  for (const [id, c] of caps || []) if (lvl.has(id)) lvl.set(id, Math.min(lvl.get(id), c));
+  for (let changed = true; changed;) {
+    changed = false;
+    for (const [id, f] of fitFloors(fit, lvl)) if ((lvl.get(id) || 0) < f.lvl) { lvl.set(id, f.lvl); changed = true; }
+  }
+  const out = new Map();
+  for (const [id, l] of lvl) if (l > 0) out.set(id, { ...need.get(id), lvl: l, lowered: l < need.get(id).lvl });
+  return { need: out, floor: fitFloors(fit, lvl) };
+}
+
 // Next step up for a fit: what the next skill level (Minimum -> Good -> Elite) adds,
 // or at Elite the skills the fit uses that are still below V. Returns [{sk, lvl, cur}].
 function fitUpgrades(fit, tier, extra) {
@@ -696,7 +727,8 @@ if (typeof module !== 'undefined') module.exports = { planText, parseFit, fitSki
       fitTitle: t => 'Skills for this fit: ' + t, haveIt: 'starting skill', fitUnknown: n => `Not recognised (${n}):`, fitOk: n => `${n} modules, drones, charges and implants recognised.`,
       gameHint: 'In game, create a new skill plan and paste the list. The game skips what you already have and shows the real time for your character. To optimise the remap, copy the remaining queue back into the Plan & remap tab.',
       sentToPlan: 'Plan replaced with the fit skills', tipLoad: 'Loading the description…', tipFail: 'No description: the EVE servers (ESI) cannot be reached.', tipSrc: 'Description from the game (ESI), in English.', fitNothing: 'Nothing to add: the fit already has the core support skills.', upH: t => 'Next level: ' + t, upW: 'What the next skill level adds for this fit', upW5: 'Skills this fit uses, trained to V',
-      fitSgHint: 'Click + to add a skill to this fit. Added skills are cleared when you paste another fit.', clearAdded: 'Remove added',
+      fitSgHint: 'Click + to add a skill to this fit, or − in the list above to lower one. Changes are cleared when you paste another fit.', clearAdded: 'Undo changes', lower: r => 'Lower to ' + r, raise: r => 'Raise to ' + r, loweredFrom: r => 'lowered from ' + r,
+      cantLower: (r, by) => `Cannot go below ${r}: needed by ${by}`,
       addedT: s => 'Added ' + s, raceLbl: 'Starting skills of a new character', auto: 'Auto', off: 'Off',
       raceInfo: (r, n, a) => `${a ? 'Detected from the plan: ' : ''}${r}, ${n} starting skills count as trained (only for skills outside the plan).`, raceOff: 'Starting skills are ignored.', raceCommon: n => `No race found in the plan, so only the ${n} skills every race starts with count as trained.`, addedReq: 'Prerequisites added', switchTo: 'Polski', switchAria: 'Przełącz na polski', locale: 'en-GB',
     },
@@ -731,7 +763,8 @@ if (typeof module !== 'undefined') module.exports = { planText, parseFit, fitSki
       fitTitle: t => 'Skille do fitu: ' + t, haveIt: 'skill startowy', fitUnknown: n => `Nie rozpoznano (${n}):`, fitOk: n => `Rozpoznano ${n} modułów, dronów, amunicji i implantów.`,
       gameHint: 'W grze utwórz nowy plan skilli i wklej listę. Gra sama pominie to, co już masz, i pokaże prawdziwy czas dla twojej postaci. Żeby policzyć remap, skopiuj pozostałą kolejkę z powrotem do zakładki Plan i remap.',
       sentToPlan: 'Plan zastąpiony skillami z fitu', tipLoad: 'Wczytuję opis…', tipFail: 'Brak opisu: nie da się połączyć z serwerami EVE (ESI).', tipSrc: 'Opis z gry (ESI), po angielsku.', fitNothing: 'Nic do dodania: fit ma już podstawowe skille wspierające.', upH: t => 'Wyższy poziom: ' + t, upW: 'Co dodaje następny poziom skilli dla tego fitu', upW5: 'Skille z tego fitu wytrenowane na V',
-      fitSgHint: 'Kliknij +, żeby dodać skill do tego fitu. Dodane skille znikają po wklejeniu innego fitu.', clearAdded: 'Usuń dodane',
+      fitSgHint: 'Kliknij +, żeby dodać skill do tego fitu, albo − na liście wyżej, żeby go obniżyć. Zmiany znikają po wklejeniu innego fitu.', clearAdded: 'Cofnij zmiany', lower: r => 'Obniż do ' + r, raise: r => 'Podnieś do ' + r, loweredFrom: r => 'obniżone z ' + r,
+      cantLower: (r, by) => `Nie da się zejść poniżej ${r}: wymaga tego ${by}`,
       addedT: s => 'Dodano ' + s, raceLbl: 'Skille startowe nowej postaci', auto: 'Auto', off: 'Wyłącz',
       raceInfo: (r, n, a) => `${a ? 'Rozpoznano z planu: ' : ''}${r}, ${n} skilli startowych liczę jako wytrenowane (tylko dla skilli spoza planu).`, raceOff: 'Skille startowe są pomijane.', raceCommon: n => `W planie nie ma rasy, więc jako wytrenowane liczę tylko ${n} skilli, z którymi startuje każda rasa.`, addedReq: 'Dodano wymagania', switchTo: 'English', switchAria: 'Switch to English', locale: 'pl-PL',
     },
@@ -751,6 +784,7 @@ if (typeof module !== 'undefined') module.exports = { planText, parseFit, fitSki
   $('trained').value = store.get('trained', '');
   $('fit').value = store.get('fit', '');
   let fitAdd = store.get('fitAdd', []); // [[skillId, level]] added to the fit from the suggestions
+  let fitCap = store.get('fitCap', []); // [[skillId, level]] lowered with the minus button
   if ($('trained').value.trim()) $('trainedBox').open = true;
 
   function applyLang() {
@@ -806,7 +840,7 @@ if (typeof module !== 'undefined') module.exports = { planText, parseFit, fitSki
   }
 
   let tmr;
-  ['plan', 'trained', 'fit'].forEach(id => $(id).addEventListener('input', () => { clearTimeout(tmr); tmr = setTimeout(() => { if (id === 'fit' && fitAdd.length) { fitAdd = []; store.set('fitAdd', fitAdd); } store.set(id, $(id).value); run(); }, 250); }));
+  ['plan', 'trained', 'fit'].forEach(id => $(id).addEventListener('input', () => { clearTimeout(tmr); tmr = setTimeout(() => { if (id === 'fit' && (fitAdd.length || fitCap.length)) { fitAdd = []; fitCap = []; store.set('fitAdd', fitAdd); store.set('fitCap', fitCap); } store.set(id, $(id).value); run(); }, 250); }));
 
   function toast(msg) {
     const t = document.createElement('div'); t.className = 'toast'; t.textContent = msg; t.setAttribute('role', 'status');
@@ -930,7 +964,8 @@ if (typeof module !== 'undefined') module.exports = { planText, parseFit, fitSki
     let info = L.fitOk(f.types.length);
     if (f.unknown.length) info += ` <span style="color:var(--bad)">${L.fitUnknown(f.unknown.length)} ${esc(f.unknown.slice(0, 3).join(', '))}${f.unknown.length > 3 ? '…' : ''}</span>`;
     $('fitInfo').innerHTML = info + '<br>' + L.fitHelp;
-    const need = fitSkills(f, state.tier, fitAdd);
+    const full = fitSkills(f, state.tier, fitAdd);
+    const C = fitCapped(f, full, fitCap), need = C.need;
     const st = starterFor([...need.keys()].map(id => ({ id, lvl: 1 })));
     if (state.tab === 'fit') $('raceInfo').textContent = st.info;
     const have = id => Math.max(trainedUser.get(id) || 0, st.map.get(id) || 0);
@@ -956,7 +991,11 @@ if (typeof module !== 'undefined') module.exports = { planText, parseFit, fitSki
       html += `<div class="fitgrp"><h3>${L.grp[g]}</h3>`;
       for (const [id, v] of list) {
         const sk = BY_ID.get(id), h = have(id), t = tBySkill.get(id) || 0;
-        html += `<div class="fitrow${h >= v.lvl ? ' done' : ''}"><div><span class="skn" data-sk="${id}">${esc(sk.name)}</span> <span style="font-family:var(--f-mono);color:var(--accent)">${ROM[v.lvl]}</span>${lvbar(h, v.lvl)}<small>${SHORT[sk.p]}/${SHORT[sk.s]}, ${L.rank} ${sk.rank}${h >= v.lvl ? ' · ' + L.haveIt : ''}</small></div><span class="tm">${t ? '+' + fmtDur(t) : '✓'}</span></div>`;
+        const fl = C.floor.get(id), min = fl ? fl.lvl : 0, by = fl ? [...fl.by] : [];
+        const minusTitle = v.lvl <= min ? L.cantLower(ROM[min] || '0', by.slice(0, 2).join(', ') + (by.length > 2 ? L.andMore(by.length - 2) : '')) : L.lower(ROM[v.lvl - 1] || '0');
+        const btns = `<button type="button" class="lvbtn" data-fsub="${id}:${v.lvl - 1}" title="${esc(minusTitle)}" aria-label="${esc(minusTitle)}"${v.lvl <= min ? ' aria-disabled="true"' : ''}>−</button>`
+          + (v.lowered ? `<button type="button" class="lvbtn" data-fraise="${id}:${v.lvl + 1}" title="${esc(L.raise(ROM[v.lvl + 1]))}" aria-label="${esc(L.raise(ROM[v.lvl + 1]))}">+</button>` : '');
+        html += `<div class="fitrow${h >= v.lvl ? ' done' : ''}"><div><span class="skn" data-sk="${id}">${esc(sk.name)}</span> <span style="font-family:var(--f-mono);color:var(--accent)">${ROM[v.lvl]}</span>${lvbar(h, v.lvl)}<small>${SHORT[sk.p]}/${SHORT[sk.s]}, ${L.rank} ${sk.rank}${v.lowered ? ' · ' + L.loweredFrom(ROM[full.get(id).lvl]) : ''}${h >= v.lvl ? ' · ' + L.haveIt : ''}</small></div><span class="tm">${t ? '+' + fmtDur(t) : '✓'}${btns}</span></div>`;
       }
       html += '</div>';
     }
@@ -986,7 +1025,7 @@ if (typeof module !== 'undefined') module.exports = { planText, parseFit, fitSki
       for (const r of ups) sg += sgRow(r);
       sg += '</div>';
     }
-    const clear = fitAdd.length ? ` <button type="button" class="btn small" id="fitClearAdded">${L.clearAdded}</button>` : '';
+    const clear = fitAdd.length || fitCap.length ? ` <button type="button" class="btn small" id="fitClearAdded">${L.clearAdded}</button>` : '';
     $('fitSg').innerHTML = (sg ? sg + `<p class="hint">${L.fitSgHint}${clear}</p>` : `<p class="empty">${L.fitNothing}</p>${clear ? `<p class="hint">${clear}</p>` : ''}`);
     $('fitSgPanel').hidden = false;
   }
@@ -1041,9 +1080,17 @@ if (typeof module !== 'undefined') module.exports = { planText, parseFit, fitSki
     if (fa) {
       const [id, lvl] = fa.dataset.fadd.split(':').map(Number);
       fitAdd = fitAdd.filter(([x]) => x !== id).concat([[id, lvl]]); store.set('fitAdd', fitAdd);
+      fitCap = fitCap.filter(([x]) => x !== id); store.set('fitCap', fitCap);
       run(); toast(L.addedT(BY_ID.get(id).name + ' ' + ROM[lvl])); return;
     }
-    if (e.target.closest('#fitClearAdded')) { fitAdd = []; store.set('fitAdd', fitAdd); run(); return; }
+    if (e.target.closest('#fitClearAdded')) { fitAdd = []; fitCap = []; store.set('fitAdd', fitAdd); store.set('fitCap', fitCap); run(); return; }
+    const fs = e.target.closest('[data-fsub],[data-fraise]');
+    if (fs && fs.getAttribute('aria-disabled')) { toast(fs.title); return; }
+    if (fs) {
+      const [id, lvl] = (fs.dataset.fsub || fs.dataset.fraise).split(':').map(Number);
+      fitCap = fitCap.filter(([x]) => x !== id).concat([[id, lvl]]); store.set('fitCap', fitCap);
+      run(); return;
+    }
     const fc = e.target.closest('[data-fcopy]');
     if (fc && lastFit) { copy(listText(lastFit.blocks[+fc.dataset.fcopy].rows)); return; }
     if (e.target.closest('#copyGame') && lastFit) copy(listText(lastFit.blocks.flatMap(b => b.rows)));
