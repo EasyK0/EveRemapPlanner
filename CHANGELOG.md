@@ -4,6 +4,7 @@ All notable changes to Remap Planner. Adding a new version at the top publishes 
 
 ## [Unreleased]
 
+- Hover over (or tap) a skill name in the queue, the suggestions or the Fit tab to see what the skill does. The description comes from the game (ESI, in English) and is kept in the browser after the first look.
 - Suggestions (Plan and Fit tabs) go up to IV in one step; V is offered on its own once you have IV. A skill at III is now suggested as IV, not V.
 - Fit tab suggestions also offer the next skill level: at Minimum what Good adds, at Good what Elite adds, and at Elite the fit's skills still below V. Before this, Good and Elite usually showed "Nothing to add".
 - Fit tab: a "You may be missing" panel suggests support skills (fitting, navigation, targeting, weapon and drone support, Cybernetics) for the fit, using the same rules as the Plan tab. Click + to add one to the fit; added skills appear in an "Added by you" group with their prerequisites and are cleared when another fit is pasted.

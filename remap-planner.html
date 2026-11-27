@@ -117,6 +117,10 @@ td .auto { font-size: 11px; color: var(--muted); margin-left: 6px; }
 .pair { font: 11.5px var(--f-mono); color: var(--muted); white-space: nowrap; }
 tr.divider td { background: var(--accent-soft); color: var(--ink); font-weight: 600; border-bottom: 1px solid var(--accent); }
 tr.divider td small { font-weight: 400; color: var(--muted); margin-left: 6px; }
+.skn { cursor: help; text-decoration: underline dotted var(--line); text-underline-offset: 3px; }
+.sktip { position: fixed; z-index: 50; max-width: min(380px, calc(100vw - 32px)); background: var(--panel); color: var(--ink); border: 1px solid var(--line); border-radius: var(--r); padding: 8px 10px; font-size: 13px; line-height: 1.45; box-shadow: 0 6px 24px rgba(0,0,0,.45); pointer-events: none; }
+.sktip b { display: block; margin-bottom: 2px; }
+.sktip small { display: block; color: var(--muted); margin-top: 4px; }
 .toast { position: fixed; left: 50%; transform: translateX(-50%); bottom: calc(20px + env(safe-area-inset-bottom, 0px)); background: var(--ink); color: var(--panel); padding: 8px 14px; border-radius: var(--r); font-size: 13px; }
 .lvbar { display: inline-flex; gap: 2px; vertical-align: middle; margin-left: 6px; }
 .lvbar i { width: 7px; height: 7px; border: 1px solid var(--muted); display: inline-block; }
@@ -691,7 +695,7 @@ if (typeof module !== 'undefined') module.exports = { planText, parseFit, fitSki
       timeNote: 'counted from starting skills', skillsN: (n, sp) => `${n} skills, ${sp} M SP`, noFit: 'Paste a fit to see the skills it needs.',
       fitTitle: t => 'Skills for this fit: ' + t, haveIt: 'starting skill', fitUnknown: n => `Not recognised (${n}):`, fitOk: n => `${n} modules, drones, charges and implants recognised.`,
       gameHint: 'In game, create a new skill plan and paste the list. The game skips what you already have and shows the real time for your character. To optimise the remap, copy the remaining queue back into the Plan & remap tab.',
-      sentToPlan: 'Plan replaced with the fit skills', fitNothing: 'Nothing to add: the fit already has the core support skills.', upH: t => 'Next level: ' + t, upW: 'What the next skill level adds for this fit', upW5: 'Skills this fit uses, trained to V',
+      sentToPlan: 'Plan replaced with the fit skills', tipLoad: 'Loading the description…', tipFail: 'No description: the EVE servers (ESI) cannot be reached.', tipSrc: 'Description from the game (ESI), in English.', fitNothing: 'Nothing to add: the fit already has the core support skills.', upH: t => 'Next level: ' + t, upW: 'What the next skill level adds for this fit', upW5: 'Skills this fit uses, trained to V',
       fitSgHint: 'Click + to add a skill to this fit. Added skills are cleared when you paste another fit.', clearAdded: 'Remove added',
       addedT: s => 'Added ' + s, raceLbl: 'Starting skills of a new character', auto: 'Auto', off: 'Off',
       raceInfo: (r, n, a) => `${a ? 'Detected from the plan: ' : ''}${r}, ${n} starting skills count as trained (only for skills outside the plan).`, raceOff: 'Starting skills are ignored.', raceCommon: n => `No race found in the plan, so only the ${n} skills every race starts with count as trained.`, addedReq: 'Prerequisites added', switchTo: 'Polski', switchAria: 'Przełącz na polski', locale: 'en-GB',
@@ -726,7 +730,7 @@ if (typeof module !== 'undefined') module.exports = { planText, parseFit, fitSki
       timeNote: 'liczone od skilli startowych', skillsN: (n, sp) => `${n} skilli, ${sp} mln SP`, noFit: 'Wklej fit, żeby zobaczyć potrzebne skille.',
       fitTitle: t => 'Skille do fitu: ' + t, haveIt: 'skill startowy', fitUnknown: n => `Nie rozpoznano (${n}):`, fitOk: n => `Rozpoznano ${n} modułów, dronów, amunicji i implantów.`,
       gameHint: 'W grze utwórz nowy plan skilli i wklej listę. Gra sama pominie to, co już masz, i pokaże prawdziwy czas dla twojej postaci. Żeby policzyć remap, skopiuj pozostałą kolejkę z powrotem do zakładki Plan i remap.',
-      sentToPlan: 'Plan zastąpiony skillami z fitu', fitNothing: 'Nic do dodania: fit ma już podstawowe skille wspierające.', upH: t => 'Wyższy poziom: ' + t, upW: 'Co dodaje następny poziom skilli dla tego fitu', upW5: 'Skille z tego fitu wytrenowane na V',
+      sentToPlan: 'Plan zastąpiony skillami z fitu', tipLoad: 'Wczytuję opis…', tipFail: 'Brak opisu: nie da się połączyć z serwerami EVE (ESI).', tipSrc: 'Opis z gry (ESI), po angielsku.', fitNothing: 'Nic do dodania: fit ma już podstawowe skille wspierające.', upH: t => 'Wyższy poziom: ' + t, upW: 'Co dodaje następny poziom skilli dla tego fitu', upW5: 'Skille z tego fitu wytrenowane na V',
       fitSgHint: 'Kliknij +, żeby dodać skill do tego fitu. Dodane skille znikają po wklejeniu innego fitu.', clearAdded: 'Usuń dodane',
       addedT: s => 'Dodano ' + s, raceLbl: 'Skille startowe nowej postaci', auto: 'Auto', off: 'Wyłącz',
       raceInfo: (r, n, a) => `${a ? 'Rozpoznano z planu: ' : ''}${r}, ${n} skilli startowych liczę jako wytrenowane (tylko dla skilli spoza planu).`, raceOff: 'Skille startowe są pomijane.', raceCommon: n => `W planie nie ma rasy, więc jako wytrenowane liczę tylko ${n} skilli, z którymi startuje każda rasa.`, addedReq: 'Dodano wymagania', switchTo: 'English', switchAria: 'Switch to English', locale: 'pl-PL',
@@ -880,7 +884,7 @@ if (typeof module !== 'undefined') module.exports = { planText, parseFit, fitSki
       html += `<div class="sg-group" id="reqGroup"><div class="sg-head"><span class="t">${L.reqH}</span><button type="button" class="btn small" id="addAllReq">${L.addAll}</button></div>
         <div class="hint" style="margin-bottom:6px">${L.reqHint}</div>`;
       for (const m of [...must, ...check]) html += `<div class="sg-row"><button type="button" class="plus" data-add="${m.sk.id}:${m.have + 1}:${m.lvl}" aria-label="+ ${esc(m.sk.name)}">+</button>
-        <div class="nm">${esc(m.sk.name)} <span style="font-family:var(--f-mono);color:var(--accent)">${ROM[m.lvl]}</span>${lvbar(m.have, m.lvl)}
+        <div class="nm"><span class="skn" data-sk="${m.sk.id}">${esc(m.sk.name)}</span> <span style="font-family:var(--f-mono);color:var(--accent)">${ROM[m.lvl]}</span>${lvbar(m.have, m.lvl)}
         <span class="chip ${m.inPlan ? 'must' : 'check'}">${m.inPlan ? L.tooLow : L.check}</span>
         <small>${L.neededBy}: ${esc([...m.by].slice(0, 3).join(', '))}${m.by.size > 3 ? L.andMore(m.by.size - 3) : ''}</small></div>
         <span class="tm">+${fmtDur(tFor(m.sk, m.have + 1, m.lvl))}</span></div>`;
@@ -891,7 +895,7 @@ if (typeof module !== 'undefined') module.exports = { planText, parseFit, fitSki
       if (!rows.length) continue;
       html += `<div class="sg-group"><div class="sg-head"><span class="t">${esc(g.rule.label[state.lang])}</span><span class="w">${esc(g.rule.why[state.lang])}</span></div>`;
       for (const r of rows) html += `<div class="sg-row"><button type="button" class="plus" data-add="${r.sk.id}:${r.from}:${r.lvl}" aria-label="+ ${esc(r.sk.name)}">+</button>
-        <div class="nm">${esc(r.sk.name)} <span style="font-family:var(--f-mono);color:var(--accent)">${ROM[r.lvl]}</span>${lvbar(r.from - 1, r.lvl)}<small>${r.from > 1 ? L.have(ROM[r.from - 1]) : ''}${SHORT[r.sk.p]}/${SHORT[r.sk.s]}, ${L.rank} ${r.sk.rank}</small></div>
+        <div class="nm"><span class="skn" data-sk="${r.sk.id}">${esc(r.sk.name)}</span> <span style="font-family:var(--f-mono);color:var(--accent)">${ROM[r.lvl]}</span>${lvbar(r.from - 1, r.lvl)}<small>${r.from > 1 ? L.have(ROM[r.from - 1]) : ''}${SHORT[r.sk.p]}/${SHORT[r.sk.s]}, ${L.rank} ${r.sk.rank}</small></div>
         <span class="tm">+${fmtDur(tFor(r.sk, r.from, r.lvl))}</span></div>`;
       html += '</div>';
     }
@@ -902,7 +906,7 @@ if (typeof module !== 'undefined') module.exports = { planText, parseFit, fitSki
     let n = 0;
     R.blocks.forEach((b, i) => {
       if (b.remap && (R.blocks.length > 1 || state.mode > 0)) q += `<tr class="divider"><td colspan="5">${i === 0 ? L.nowR : L.hereR}: ${R.blocks.length > 1 ? L.remapLow + ' ' + (i + 1) : L.remapLow}<small>${ATTRS.map(k => SHORT[k] + ' ' + b.a[k]).join(' · ')}</small></td></tr>`;
-      for (const r of b.rows) q += `<tr><td class="i">${++n}</td><td>${esc(r.it.sk.name)}<span class="lv">${ROM[r.it.lvl]}</span>${r.it.auto ? `<span class="auto">${L.added}</span>` : ''}</td><td><span class="pair">${SHORT[r.it.sk.p]}/${SHORT[r.it.sk.s]}</span></td><td class="num">${fmtDur(r.t)}</td><td class="num">${fmtDur(r.end)}</td></tr>`;
+      for (const r of b.rows) q += `<tr><td class="i">${++n}</td><td><span class="skn" data-sk="${r.it.sk.id}">${esc(r.it.sk.name)}</span><span class="lv">${ROM[r.it.lvl]}</span>${r.it.auto ? `<span class="auto">${L.added}</span>` : ''}</td><td><span class="pair">${SHORT[r.it.sk.p]}/${SHORT[r.it.sk.s]}</span></td><td class="num">${fmtDur(r.t)}</td><td class="num">${fmtDur(r.end)}</td></tr>`;
     });
     $('queue').innerHTML = q + '</tbody>';
     $('qBtns').innerHTML = (R.blocks.length > 1 ? R.blocks.map((b, i) => `<button type="button" class="btn" data-copy="${i}">${L.copyBlock(i + 1)}</button>`).join('') : '')
@@ -952,7 +956,7 @@ if (typeof module !== 'undefined') module.exports = { planText, parseFit, fitSki
       html += `<div class="fitgrp"><h3>${L.grp[g]}</h3>`;
       for (const [id, v] of list) {
         const sk = BY_ID.get(id), h = have(id), t = tBySkill.get(id) || 0;
-        html += `<div class="fitrow${h >= v.lvl ? ' done' : ''}"><div>${esc(sk.name)} <span style="font-family:var(--f-mono);color:var(--accent)">${ROM[v.lvl]}</span>${lvbar(h, v.lvl)}<small>${SHORT[sk.p]}/${SHORT[sk.s]}, ${L.rank} ${sk.rank}${h >= v.lvl ? ' · ' + L.haveIt : ''}</small></div><span class="tm">${t ? '+' + fmtDur(t) : '✓'}</span></div>`;
+        html += `<div class="fitrow${h >= v.lvl ? ' done' : ''}"><div><span class="skn" data-sk="${id}">${esc(sk.name)}</span> <span style="font-family:var(--f-mono);color:var(--accent)">${ROM[v.lvl]}</span>${lvbar(h, v.lvl)}<small>${SHORT[sk.p]}/${SHORT[sk.s]}, ${L.rank} ${sk.rank}${h >= v.lvl ? ' · ' + L.haveIt : ''}</small></div><span class="tm">${t ? '+' + fmtDur(t) : '✓'}</span></div>`;
       }
       html += '</div>';
     }
@@ -965,7 +969,7 @@ if (typeof module !== 'undefined') module.exports = { planText, parseFit, fitSki
     let sg = '';
     const seen = new Set();
     const sgRow = r => `<div class="sg-row"><button type="button" class="plus" data-fadd="${r.sk.id}:${r.lvl}" aria-label="+ ${esc(r.sk.name)}">+</button>
-        <div class="nm">${esc(r.sk.name)} <span style="font-family:var(--f-mono);color:var(--accent)">${ROM[r.lvl]}</span>${lvbar(r.from - 1, r.lvl)}<small>${r.from > 1 ? L.have(ROM[r.from - 1]) : ''}${SHORT[r.sk.p]}/${SHORT[r.sk.s]}, ${L.rank} ${r.sk.rank}</small></div>
+        <div class="nm"><span class="skn" data-sk="${r.sk.id}">${esc(r.sk.name)}</span> <span style="font-family:var(--f-mono);color:var(--accent)">${ROM[r.lvl]}</span>${lvbar(r.from - 1, r.lvl)}<small>${r.from > 1 ? L.have(ROM[r.from - 1]) : ''}${SHORT[r.sk.p]}/${SHORT[r.sk.s]}, ${L.rank} ${r.sk.rank}</small></div>
         <span class="tm">+${fmtDur(tFor(r.sk, r.from, r.lvl))}</span></div>`;
     for (const g of suggestions({ planned: need, levelOf: lvlOf, items: [] })) {
       sg += `<div class="sg-group"><div class="sg-head"><span class="t">${esc(g.rule.label[state.lang])}</span><span class="w">${esc(g.rule.why[state.lang])}</span></div>`;
@@ -986,6 +990,44 @@ if (typeof module !== 'undefined') module.exports = { planText, parseFit, fitSki
     $('fitSg').innerHTML = (sg ? sg + `<p class="hint">${L.fitSgHint}${clear}</p>` : `<p class="empty">${L.fitNothing}</p>${clear ? `<p class="hint">${clear}</p>` : ''}`);
     $('fitSgPanel').hidden = false;
   }
+
+  // Skill descriptions on hover (or tap): fetched from ESI once, then kept in localStorage.
+  const descs = new Map();
+  async function skillDesc(id) {
+    if (descs.has(id)) return descs.get(id);
+    let d = null;
+    try { d = localStorage.getItem('desc:' + id); } catch (e) {}
+    if (d == null) {
+      const r = await fetch(`https://esi.evetech.net/latest/universe/types/${id}/?language=en`);
+      if (!r.ok) throw new Error('ESI ' + r.status);
+      const j = await r.json();
+      d = String(j.description || '').replace(/<[^>]+>/g, '').replace(/\s+/g, ' ').trim();
+      try { localStorage.setItem('desc:' + id, d); } catch (e) {}
+    }
+    descs.set(id, d);
+    return d;
+  }
+  const tip = document.createElement('div');
+  tip.className = 'sktip'; tip.hidden = true; document.body.appendChild(tip);
+  let tipFor = null;
+  function placeTip(el) {
+    const r = el.getBoundingClientRect(), w = tip.offsetWidth, h = tip.offsetHeight;
+    const left = Math.max(16, Math.min(r.left, innerWidth - w - 16));
+    const top = r.bottom + 6 + h > innerHeight ? r.top - h - 6 : r.bottom + 6;
+    tip.style.left = left + 'px'; tip.style.top = Math.max(8, top) + 'px';
+  }
+  function showTip(el) {
+    const id = +el.dataset.sk, sk = BY_ID.get(id);
+    tipFor = el;
+    const fill = body => { if (tipFor !== el) return; tip.innerHTML = `<b>${esc(sk.name)}</b>${body}`; tip.hidden = false; placeTip(el); };
+    fill(`<span>${L.tipLoad}</span>`);
+    skillDesc(id).then(d => fill(`<span>${esc(d)}</span><small>${SHORT[sk.p]}/${SHORT[sk.s]}, ${L.rank} ${sk.rank} · ${L.tipSrc}</small>`))
+      .catch(() => fill(`<span>${L.tipFail}</span>`));
+  }
+  function hideTip() { tipFor = null; tip.hidden = true; }
+  document.addEventListener('mouseover', e => { const el = e.target.closest('.skn'); if (el && el !== tipFor) showTip(el); else if (!el && tipFor) hideTip(); });
+  document.addEventListener('click', e => { const el = e.target.closest('.skn'); if (el) { if (el === tipFor) hideTip(); else showTip(el); } else if (tipFor) hideTip(); });
+  addEventListener('scroll', hideTip, true);
 
   const listText = rows => rows.map(r => r.it.sk.name + ' ' + r.it.lvl).join('\n');
   document.addEventListener('click', e => {
