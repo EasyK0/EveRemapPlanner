@@ -138,3 +138,15 @@ test('planText names the blocks for no remap and for two remaps', () => {
   assert.equal(two.blocks.length, 2);
   assert.ok(text.includes('Remap 1: ') && text.includes('Remap 2: '));
 });
+
+test('fit parsing recognises implants and boosters and counts their skills', () => {
+  const fit = E.parseFit('[Rifter, Test]\nGyrostabilizer II\n\nHornet II x2\n\nMid-grade Amulet Alpha\nHigh-grade Snake Alpha\nSynth Blue Pill Booster');
+  assert.equal(fit.ship.name, 'Rifter');
+  assert.deepEqual(Array.from(fit.unknown), []);
+  assert.deepEqual(Array.from(fit.types, t => t.name), ['Gyrostabilizer II', 'Hornet II', 'Mid-grade Amulet Alpha', 'High-grade Snake Alpha', 'Synth Blue Pill Booster']);
+  const need = E.fitSkills(fit, 0);
+  const cyber = E.skillByName('Cybernetics').id;
+  assert.ok(need.get(cyber).lvl >= 1);
+  assert.equal(need.get(cyber).why, 'implant');
+  assert.equal(need.get(E.skillByName('Biology').id).why, 'implant');
+});

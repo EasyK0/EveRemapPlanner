@@ -4,6 +4,7 @@ All notable changes to Remap Planner. Adding a new version at the top publishes 
 
 ## [Unreleased]
 
+- Fit tab: implants and boosters from an EFT or Pyfa fit (1,308 types, category 20 from the SDE) are now recognised instead of being listed as "Not recognised". Their required skills, such as Cybernetics and Biology, show in a new "Implants and boosters" group, with a test.
 - "Export plan" button next to "Copy whole plan": downloads the plan as `remap-plan.txt` (in the page language, Windows line endings).
 - `planText()` in the engine: the plan as plain text (plan time, each remap with its attributes, then the numbered queue as `Skill level` lines that can be pasted back), with tests.
 - Tests for `engine.js` with Node's built-in test runner (`tests/engine.test.js`): remap results, queue order with prerequisites, shortest-first order, Cybernetics first, implant limit while training Cybernetics, plan parsing, and a check that the engine copy inside `remap-planner.html` matches `engine.js`.
