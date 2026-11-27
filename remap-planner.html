@@ -55,6 +55,12 @@ details[open] summary { margin-bottom: 8px; }
 .btn:hover { border-color: var(--accent); }
 .btn.primary { background: var(--accent); color: var(--accent-ink); border-color: var(--accent); font-weight: 600; }
 .btn.small { padding: 4px 9px; font-size: 12px; }
+.profrow { display: flex; gap: 6px; align-items: stretch; }
+#profSel, #profName { min-width: 0; background: var(--sunk); color: var(--ink); border: 1px solid var(--line); border-radius: var(--r); padding: 6px 8px; font: 13px var(--f-body); }
+#profSel { flex: 1; }
+#profName { display: block; width: 100%; margin-top: 6px; }
+#profSel:focus, #profName:focus { outline: none; border-color: var(--accent); }
+#profFleet { margin-top: 6px; }
 
 /* Summary */
 .summary { display: grid; grid-template-columns: 1.4fr 1fr 1fr; gap: 1px; background: var(--line); border: 1px solid var(--line); border-radius: var(--r); overflow: hidden; }
@@ -186,6 +192,17 @@ textarea#fit { min-height: 300px; }
         <div class="hint" id="planInfo"></div>
       </div>
       <div id="inFit" hidden>
+        <div class="field">
+          <label class="lbl" for="profSel" data-i="profLbl"></label>
+          <div class="profrow">
+            <select id="profSel"></select>
+            <button type="button" class="btn small" id="profNew" data-i="profNew"></button>
+            <button type="button" class="btn small" id="profDel" data-i="profDel"></button>
+          </div>
+          <input id="profName" type="text" maxlength="60" autocomplete="off">
+          <button type="button" class="btn small" id="profFleet" hidden></button>
+          <div class="hint" data-i="profHint"></div>
+        </div>
         <div class="field">
           <label class="lbl" for="fit" data-i="fitLbl"></label>
           <textarea id="fit" spellcheck="false" placeholder="[Vexor Navy Issue, PvE]&#10;Drone Damage Amplifier II&#10;..."></textarea>
@@ -673,6 +690,20 @@ function fitCapped(fit, need, caps) {
   return { need: out, floor: fitFloors(fit, lvl) };
 }
 
+// Skills for several saved ship profiles together: the highest level any of them needs.
+// profiles: [{fit (EFT text), tier, add, cap}]. Returns {need: Map skillId -> level, ships: count}.
+function fleetSkills(profiles) {
+  const need = new Map(); let ships = 0;
+  for (const p of profiles) {
+    const fit = parseFit(p.fit);
+    if (!fit.ship && !fit.types.length) continue;
+    ships++;
+    const one = fitCapped(fit, fitSkills(fit, p.tier || 0, p.add), p.cap).need;
+    for (const [id, v] of one) need.set(id, Math.max(need.get(id) || 0, v.lvl));
+  }
+  return { need, ships };
+}
+
 // Next step up for a fit: what the next skill level (Minimum -> Good -> Elite) adds,
 // or at Elite the skills the fit uses that are still below V. Returns [{sk, lvl, cur}].
 function fitUpgrades(fit, tier, extra) {
@@ -721,7 +752,9 @@ if (typeof module !== 'undefined') module.exports = { planText, parseFit, fitSki
       fromOne: 'Times for skills outside the plan are counted from level 1. If you already have some levels, it will be shorter.',
       thSkill: 'Skill', thAttr: 'Attributes', thTime: 'Time', thEnd: 'Done after', added: 'added, missing from plan',
       nowR: 'Now', hereR: 'Here', remapLow: 'remap', copied: n => `Copied ${n} entries`, copyFail: 'Select and copy manually',
-      tabPlan: 'Plan & remap', tabFit: 'Fit → skills', fitLbl: 'Fit (EFT format)',
+      tabPlan: 'Plan & remap', tabFit: 'Fit → skills', fitLbl: 'Fit (EFT format)', profLbl: 'Ship profiles', profNew: '+ New ship', profDel: 'Delete', profNamePh: 'Name, e.g. Kronos PvE',
+      profHint: 'Each ship keeps its fit, level and changes in this browser. Add a new ship and paste its fit: the earlier ones stay.', profN: n => 'Ship ' + n, profEmpty: 'empty',
+      fleet: n => `Plan the whole fleet (${n} ships)`, fleetDone: n => `Plan replaced with the skills for ${n} ships`, deleted: s => 'Deleted ' + s,
       fitHelp: 'In game: Fitting window, Copy to clipboard. In Pyfa: Ctrl+C.', tierLbl: 'Skill level', tier0: 'Minimum', tier1: 'Good', tier2: 'Elite',
       tierHint0: 'Everything needed to board the ship and online every module.', tierHint1: 'Ship and weapons at 4 plus support skills for what is fitted.', tierHint2: 'Key skills at 5 and T2 specialisations at 4. Long.',
       grp: { ship: 'Ship', weapon: 'Weapons and drones', module: 'Modules', implant: 'Implants and boosters', added: 'Added by you', support: 'Support skills', req: 'Prerequisites' },
@@ -757,7 +790,9 @@ if (typeof module !== 'undefined') module.exports = { planText, parseFit, fitSki
       fromOne: 'Czasy przy skillach spoza planu liczone od poziomu 1. Jeśli masz już część poziomów, wyjdzie krócej.',
       thSkill: 'Skill', thAttr: 'Atrybuty', thTime: 'Czas', thEnd: 'Koniec po', added: 'dodany, brakował w planie',
       nowR: 'Teraz', hereR: 'Tutaj', remapLow: 'remap', copied: n => `Skopiowano ${n} pozycji`, copyFail: 'Zaznacz i skopiuj ręcznie',
-      tabPlan: 'Plan i remap', tabFit: 'Fit → skille', fitLbl: 'Fit (format EFT)',
+      tabPlan: 'Plan i remap', tabFit: 'Fit → skille', fitLbl: 'Fit (format EFT)', profLbl: 'Profile statków', profNew: '+ Nowy statek', profDel: 'Usuń', profNamePh: 'Nazwa, np. Kronos PvE',
+      profHint: 'Każdy statek pamięta swój fit, poziom i zmiany w tej przeglądarce. Dodaj nowy statek i wklej fit: poprzednie zostają.', profN: n => 'Statek ' + n, profEmpty: 'pusty',
+      fleet: n => `Zaplanuj całą flotę (statki: ${n})`, fleetDone: n => `Plan zastąpiony skillami dla statków: ${n}`, deleted: s => 'Usunięto ' + s,
       fitHelp: 'W grze: okno Fitting, Copy to clipboard. W Pyfa: Ctrl+C.', tierLbl: 'Poziom skilli', tier0: 'Minimum', tier1: 'Dobrze', tier2: 'Elita',
       tierHint0: 'Wszystko, żeby wsiąść do statku i włączyć każdy moduł.', tierHint1: 'Statek i broń na 4 plus skille wspierające do tego, co masz w ficie.', tierHint2: 'Najważniejsze skille na 5, specjalizacje T2 na 4. Długo.',
       grp: { ship: 'Statek', weapon: 'Broń i drony', module: 'Moduły', implant: 'Implanty i boostery', added: 'Dodane przez ciebie', support: 'Skille wspierające', req: 'Wymagania' },
@@ -788,6 +823,13 @@ if (typeof module !== 'undefined') module.exports = { planText, parseFit, fitSki
   $('fit').value = store.get('fit', '');
   let fitAdd = store.get('fitAdd', []); // [[skillId, level]] added to the fit from the suggestions
   let fitCap = store.get('fitCap', []); // [[skillId, level]] lowered with the minus button
+  // Ship profiles: each keeps its own fit, level, added and lowered skills.
+  const newId = () => Date.now().toString(36) + Math.random().toString(36).slice(2, 6);
+  let profiles = store.get('fitProfiles', []);
+  if (!Array.isArray(profiles) || !profiles.length) profiles = [{ id: newId(), name: '', fit: $('fit').value, tier: state.tier, add: fitAdd, cap: fitCap }];
+  let profId = store.get('fitProfile', profiles[0].id);
+  if (!profiles.some(p => p.id === profId)) profId = profiles[0].id;
+  let lastTrained = new Map();
   if ($('trained').value.trim()) $('trainedBox').open = true;
 
   function applyLang() {
@@ -954,6 +996,8 @@ if (typeof module !== 'undefined') module.exports = { planText, parseFit, fitSki
 
   let lastFit = null;
   function runFit(trainedUser) {
+    lastTrained = trainedUser;
+    saveProf(); renderProfs();
     $('tierHint').textContent = L['tierHint' + state.tier];
     const f = parseFit($('fit').value);
     if (!f.ship && !f.types.length) {
@@ -1071,6 +1115,63 @@ if (typeof module !== 'undefined') module.exports = { planText, parseFit, fitSki
   document.addEventListener('mouseover', e => { const el = e.target.closest('.skn'); if (el && el !== tipFor) showTip(el); else if (!el && tipFor) hideTip(); });
   document.addEventListener('click', e => { const el = e.target.closest('.skn'); if (el) { if (el === tipFor) hideTip(); else showTip(el); } else if (tipFor) hideTip(); });
   addEventListener('scroll', hideTip, true);
+
+  // ---- Ship profiles ----
+  const curProf = () => profiles.find(p => p.id === profId) || profiles[0];
+  function profLabel(p, i) {
+    if (p.name.trim()) return p.name.trim();
+    const f = parseFit(p.fit);
+    if (f.ship) return f.ship.name + (f.fitName ? ' – ' + f.fitName : '');
+    return L.profN(i + 1) + (p.fit.trim() ? '' : ' (' + L.profEmpty + ')');
+  }
+  function renderProfs() {
+    const i = profiles.indexOf(curProf());
+    $('profSel').innerHTML = profiles.map((p, j) => `<option value="${p.id}"${j === i ? ' selected' : ''}>${esc(profLabel(p, j))}</option>`).join('');
+    if (document.activeElement !== $('profName')) $('profName').value = curProf().name;
+    $('profName').placeholder = L.profNamePh;
+    $('profDel').disabled = profiles.length < 2;
+    const ships = profiles.filter(p => p.fit.trim()).length;
+    $('profFleet').hidden = ships < 2;
+    $('profFleet').textContent = L.fleet(ships);
+  }
+  function saveProf() {
+    const p = curProf();
+    Object.assign(p, { fit: $('fit').value, tier: state.tier, add: fitAdd, cap: fitCap });
+    store.set('fitProfiles', profiles); store.set('fitProfile', p.id);
+  }
+  function loadProf(id) {
+    profId = id;
+    const p = curProf();
+    $('fit').value = p.fit; state.tier = p.tier == null ? 1 : p.tier; fitAdd = p.add || []; fitCap = p.cap || [];
+    store.set('fit', p.fit); store.set('tier', state.tier); store.set('fitAdd', fitAdd); store.set('fitCap', fitCap); store.set('fitProfile', p.id);
+    $('segTier').querySelectorAll('button').forEach(b => b.setAttribute('aria-pressed', String(+b.dataset.v === state.tier)));
+    $('profName').value = p.name;
+    run();
+  }
+  $('profSel').addEventListener('change', () => { saveProf(); loadProf($('profSel').value); });
+  $('profNew').addEventListener('click', () => {
+    saveProf();
+    const p = { id: newId(), name: '', fit: '', tier: state.tier, add: [], cap: [] };
+    profiles.push(p); loadProf(p.id); $('fit').focus();
+  });
+  $('profDel').addEventListener('click', () => {
+    if (profiles.length < 2) return;
+    const i = profiles.indexOf(curProf()), label = profLabel(curProf(), i);
+    profiles.splice(i, 1);
+    store.set('fitProfiles', profiles);
+    loadProf(profiles[Math.max(0, i - 1)].id); toast(L.deleted(label));
+  });
+  $('profName').addEventListener('input', () => { curProf().name = $('profName').value; saveProf(); renderProfs(); });
+  $('profFleet').addEventListener('click', () => {
+    saveProf();
+    const F = fleetSkills(profiles);
+    const st = starterFor([...F.need.keys()].map(id => ({ id, lvl: 1 })));
+    const have = id => Math.max(lastTrained.get(id) || 0, st.map.get(id) || 0);
+    const lines = [];
+    for (const [id, l] of F.need) for (let x = have(id) + 1; x <= l; x++) lines.push(BY_ID.get(id).name + ' ' + x);
+    $('plan').value = lines.join('\n') + '\n'; store.set('plan', $('plan').value);
+    state.tab = 'plan'; store.set('tab', 'plan'); showTab(); run(); toast(L.fleetDone(F.ships));
+  });
 
   const listText = rows => rows.map(r => r.it.sk.name + ' ' + r.it.lvl).join('\n');
   document.addEventListener('click', e => {

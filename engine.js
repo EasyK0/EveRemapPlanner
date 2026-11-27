@@ -378,6 +378,20 @@ function fitCapped(fit, need, caps) {
   return { need: out, floor: fitFloors(fit, lvl) };
 }
 
+// Skills for several saved ship profiles together: the highest level any of them needs.
+// profiles: [{fit (EFT text), tier, add, cap}]. Returns {need: Map skillId -> level, ships: count}.
+function fleetSkills(profiles) {
+  const need = new Map(); let ships = 0;
+  for (const p of profiles) {
+    const fit = parseFit(p.fit);
+    if (!fit.ship && !fit.types.length) continue;
+    ships++;
+    const one = fitCapped(fit, fitSkills(fit, p.tier || 0, p.add), p.cap).need;
+    for (const [id, v] of one) need.set(id, Math.max(need.get(id) || 0, v.lvl));
+  }
+  return { need, ships };
+}
+
 // Next step up for a fit: what the next skill level (Minimum -> Good -> Elite) adds,
 // or at Elite the skills the fit uses that are still below V. Returns [{sk, lvl, cur}].
 function fitUpgrades(fit, tier, extra) {
@@ -391,4 +405,4 @@ function fitUpgrades(fit, tier, extra) {
   return out;
 }
 
-if (typeof module !== 'undefined') module.exports = { fitFloors, fitCapped, stepTo, planText, parseFit, fitSkills, fitUpgrades, TYPE_BY_NAME, suggestions, RULES, parseList, buildPlan, plan, bestRemap, fmtDur, BY_ID, BY_NAME, skillByName, spFor, rateOf, REMAPS, ATTRS };
+if (typeof module !== 'undefined') module.exports = { fleetSkills, fitFloors, fitCapped, stepTo, planText, parseFit, fitSkills, fitUpgrades, TYPE_BY_NAME, suggestions, RULES, parseList, buildPlan, plan, bestRemap, fmtDur, BY_ID, BY_NAME, skillByName, spFor, rateOf, REMAPS, ATTRS };
