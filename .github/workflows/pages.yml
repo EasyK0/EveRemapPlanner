@@ -5,7 +5,7 @@ name: Pages
 on:
   push:
     branches: [main]
-    paths: [remap-planner.html, docs/**]
+    paths: [remap-planner.html, docs/**, .github/workflows/pages.yml]
   workflow_dispatch:
 
 permissions:
