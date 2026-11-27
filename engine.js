@@ -245,6 +245,9 @@ const RULES = [
       if (c.names.has('Command Ships')) a.push(['Wing Command', 4]);
       return a;
     } },
+  { id: 'mjd', label: { pl: 'Micro Jump Drive', en: 'Micro Jump Drive' }, why: { pl: 'Szybszy MJD: ucieczka z bubli, dystans od celu', en: 'Faster MJD: out of bubbles, range from the target' },
+    when: c => c.groups.has('Spaceship Command'), suggestOnly: true,
+    add: [['Micro Jump Drive Operation', 4]] },
   { id: 'implants', label: { pl: 'Implanty', en: 'Implants' }, why: { pl: 'Implanty +5 wymagają Cybernetics 5', en: '+5 implants need Cybernetics 5' },
     when: () => true,
     add: [['Cybernetics', 5]] },
@@ -336,7 +339,7 @@ function fitSkills(fit, tier, extra) {
     const groups = new Set([...need.keys()].map(id => BY_ID.get(id).group));
     const ctx = { names, groups, items: 1 };
     for (const r of RULES) {
-      if (!r.when(ctx)) continue;
+      if (r.suggestOnly || !r.when(ctx)) continue; // suggestOnly: offered at the bottom, never added by Good/Elite
       for (const [n, l] of (typeof r.add === 'function' ? r.add(ctx) : r.add)) {
         const sk = skillByName(n); if (!sk) continue;
         want(sk.id, tier === 2 && ELITE5.has(n) ? 5 : l, 'support');

@@ -540,6 +540,9 @@ const RULES = [
       if (c.names.has('Command Ships')) a.push(['Wing Command', 4]);
       return a;
     } },
+  { id: 'mjd', label: { pl: 'Micro Jump Drive', en: 'Micro Jump Drive' }, why: { pl: 'Szybszy MJD: ucieczka z bubli, dystans od celu', en: 'Faster MJD: out of bubbles, range from the target' },
+    when: c => c.groups.has('Spaceship Command'), suggestOnly: true,
+    add: [['Micro Jump Drive Operation', 4]] },
   { id: 'implants', label: { pl: 'Implanty', en: 'Implants' }, why: { pl: 'Implanty +5 wymagają Cybernetics 5', en: '+5 implants need Cybernetics 5' },
     when: () => true,
     add: [['Cybernetics', 5]] },
@@ -631,7 +634,7 @@ function fitSkills(fit, tier, extra) {
     const groups = new Set([...need.keys()].map(id => BY_ID.get(id).group));
     const ctx = { names, groups, items: 1 };
     for (const r of RULES) {
-      if (!r.when(ctx)) continue;
+      if (r.suggestOnly || !r.when(ctx)) continue; // suggestOnly: offered at the bottom, never added by Good/Elite
       for (const [n, l] of (typeof r.add === 'function' ? r.add(ctx) : r.add)) {
         const sk = skillByName(n); if (!sk) continue;
         want(sk.id, tier === 2 && ELITE5.has(n) ? 5 : l, 'support');
@@ -986,7 +989,8 @@ if (typeof module !== 'undefined') module.exports = { planText, parseFit, fitSki
       + `<button type="button" class="btn primary" id="copyGame">${L.copyGame}</button>`;
     let html = '';
     for (const g of ['ship', 'weapon', 'module', 'implant', 'support', 'added', 'req']) {
-      const list = [...need].filter(([, v]) => v.why === g).sort((a, b) => (tBySkill.get(b[0]) || 0) - (tBySkill.get(a[0]) || 0));
+      // Alphabetical, so a row keeps its place when its level changes.
+      const list = [...need].filter(([, v]) => v.why === g).sort((a, b) => BY_ID.get(a[0]).name.localeCompare(BY_ID.get(b[0]).name));
       if (!list.length) continue;
       html += `<div class="fitgrp"><h3>${L.grp[g]}</h3>`;
       for (const [id, v] of list) {
@@ -1012,7 +1016,7 @@ if (typeof module !== 'undefined') module.exports = { planText, parseFit, fitSki
         <span class="tm">+${fmtDur(tFor(r.sk, r.from, r.lvl))}</span></div>`;
     for (const g of suggestions({ planned: need, levelOf: lvlOf, items: [] })) {
       sg += `<div class="sg-group"><div class="sg-head"><span class="t">${esc(g.rule.label[state.lang])}</span><span class="w">${esc(g.rule.why[state.lang])}</span></div>`;
-      for (const r of g.rows) { seen.add(r.sk.id); sg += sgRow(r); }
+      for (const r of [...g.rows].sort((a, b) => tFor(a.sk, a.from, a.lvl) - tFor(b.sk, b.from, b.lvl))) { seen.add(r.sk.id); sg += sgRow(r); }
       sg += '</div>';
     }
     // The next skill level up, so Good and Elite have something to offer too.

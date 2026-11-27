@@ -218,3 +218,15 @@ test('fitCapped lowers a skill but never below what the fit or another skill nee
   const shipReq = fit.ship.req.find(([r]) => r === gbs)[1];
   assert.equal(E.fitCapped(fit, full, [[gbs, 0]]).need.get(gbs).lvl, shipReq);
 });
+
+test('Micro Jump Drive Operation is suggested for ships but not added by Good or Elite', () => {
+  const fit = E.parseFit('[Rifter, Test]\nGyrostabilizer II');
+  const mjd = E.skillByName('Micro Jump Drive Operation').id;
+  for (const tier of [1, 2]) {
+    const need = E.fitSkills(fit, tier);
+    assert.ok(!need.has(mjd));
+    const lvl = id => (need.has(id) ? need.get(id).lvl : 0);
+    const rows = E.suggestions({ planned: need, levelOf: lvl, items: [] }).flatMap(g => g.rows);
+    assert.equal(rows.find(r => r.sk.id === mjd).lvl, 4);
+  }
+});

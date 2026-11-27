@@ -4,6 +4,8 @@ All notable changes to Remap Planner. Adding a new version at the top publishes 
 
 ## [Unreleased]
 
+- Fit tab: the skill list is in alphabetical order, so a row stays in place when you lower or raise it. Only the suggestions are sorted by training time.
+- Micro Jump Drive Operation IV is suggested for every ship (Plan and Fit tabs). It is only a suggestion and is not added by Good or Elite.
 - Fit tab: a − button next to each skill lowers it by one level (and + raises it back). It cannot go below what the fitted items or another skill in the list need, for example Gallente Cruiser stays at III while Gallente Battleship is in the list; clicking it then says what needs it. "Undo changes" resets added and lowered skills.
 - Hover over (or tap) a skill name in the queue, the suggestions or the Fit tab to see what the skill does. The description comes from the game (ESI, in English) and is kept in the browser after the first look.
 - Suggestions (Plan and Fit tabs) go up to IV in one step; V is offered on its own once you have IV. A skill at III is now suggested as IV, not V.
