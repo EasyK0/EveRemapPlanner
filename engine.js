@@ -275,7 +275,7 @@ function suggestions(planObj) {
 const TYPE_BY_NAME = new Map();
 if (typeof TYPES !== 'undefined') for (const [name, cat, group, meta, req] of TYPES) TYPE_BY_NAME.set(name.toLowerCase(), { name, cat, group, meta, req });
 
-// EFT: [Ship, name], then modules "Module, Ammo", drones/cargo "Name x5".
+// EFT: [Ship, name], then modules "Module, Ammo", drones/cargo "Name x5", then implants and boosters (category 20).
 function parseFit(text) {
   const lines = String(text || '').split(/\r?\n/).map(l => l.trim()).filter(Boolean);
   let ship = null, fitName = '';
@@ -303,7 +303,7 @@ const ELITE5 = new Set(['Gunnery', 'Drones', 'Missile Launcher Operation', 'Rapi
   'Hull Upgrades', 'Shield Management', 'Shield Upgrades', 'Shield Operation', 'Repair Systems', 'Mechanics', 'Capacitor Management', 'Capacitor Systems Operation',
   'CPU Management', 'Power Grid Management', 'Weapon Upgrades', 'Navigation', 'Evasive Maneuvering', 'Leadership', 'Thermodynamics']);
 
-// tier: 0 minimum, 1 good, 2 elite. Returns Map skillId -> {lvl, why:'ship'|'weapon'|'module'|'support'|'req'}
+// tier: 0 minimum, 1 good, 2 elite. Returns Map skillId -> {lvl, why:'ship'|'weapon'|'module'|'implant'|'support'|'req'}
 function fitSkills(fit, tier) {
   const need = new Map();
   const want = (id, lvl, why) => {
@@ -324,7 +324,7 @@ function fitSkills(fit, tier) {
   for (const t of fit.types) {
     const weapon = WEAPON_GROUP.test(t.group) && (t.cat === 7 || t.cat === 18 || t.cat === 87);
     if (tier && weapon) direct(t, 'weapon');
-    else for (const [id, l] of t.req) want(id, l, weapon ? 'weapon' : 'module');
+    else for (const [id, l] of t.req) want(id, l, weapon ? 'weapon' : t.cat === 20 ? 'implant' : 'module');
   }
   if (tier) {
     // Support skills from the same rules as the plan, matched to the skills the fit needs.

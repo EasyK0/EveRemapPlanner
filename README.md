@@ -30,7 +30,7 @@ Training speed in EVE is `primary + secondary / 2` SP per minute, so a plan's to
 2. **Two remaps.** This is an alternating optimization. Given two remaps `A` and `B`, each skill gets a weight `time(B) − time(A)`. The best set of skills to train under `A` has to be *closed under prerequisites*: you can't train a skill under remap 1 if its prerequisite waits for remap 2. That is a **maximum-weight closure** problem, solved exactly with a min-cut (Dinic's algorithm). The remaps are then re-fitted to their new skill sets, and the steps repeat until the total stops improving. Several starting pairs are tried.
 3. **Ordering.** Within each remap block, a greedy topological sort picks the shortest skill that is ready to train.
 
-Skill data (ranks, attributes, prerequisites for 512 skills and 5,721 item types) comes from CCP's static data export via [`@eveshipfit/sde`](https://www.npmjs.com/package/@eveshipfit/sde).
+Skill data (ranks, attributes, prerequisites for 512 skills and 7,029 item types, implants and boosters included) comes from CCP's static data export via [`@eveshipfit/sde`](https://www.npmjs.com/package/@eveshipfit/sde).
 
 ## Project layout
 
