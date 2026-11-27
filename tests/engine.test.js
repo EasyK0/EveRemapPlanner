@@ -14,7 +14,7 @@ const scripts = [...html.matchAll(/<script>([\s\S]*?)<\/script>/g)].map(m => m[1
 
 const ctx = { module: { exports: {} } };
 vm.createContext(ctx);
-vm.runInContext(scripts[0] + '\n;globalThis.SKILLS = SKILLS; globalThis.TYPES = TYPES;', ctx);
+vm.runInContext(scripts[0] + '\n;globalThis.SKILLS = SKILLS; globalThis.TYPES = TYPES; globalThis.FITD = FITD;', ctx);
 vm.runInContext(engineSrc, ctx);
 const E = ctx.module.exports;
 
@@ -239,6 +239,47 @@ test('a target painter in the fit brings Signature Focusing', () => {
   const plain = E.parseFit('[Damnation, Test]');
   const need = E.fitSkills(plain, 1);
   assert.ok(!need.has(sf));
+});
+
+const RIFTER = `[Rifter, Test]
+200mm AutoCannon II, EMP S
+200mm AutoCannon II, EMP S
+200mm AutoCannon II, EMP S
+Rocket Launcher II /offline
+1MN Afterburner II
+Warp Scrambler II
+Stasis Webifier II
+Small Ancillary Armor Repairer
+Damage Control II
+200mm Steel Plates II
+
+Warrior II x2`;
+
+test('fitResources reads CPU and powergrid from the SDE', () => {
+  const fit = E.parseFit(RIFTER);
+  assert.equal(fit.mods.length, 10); // drones and charges are not fitted modules
+  const none = E.fitResources(fit, () => 0), all = E.fitResources(fit, () => 5);
+  assert.deepEqual([none.cpu[1], none.pg[1]], [130, 41]);
+  assert.equal(all.cpu[1], 162.5); // CPU Management V: +25%
+  assert.ok(all.cpu[0] < none.cpu[0]); // Weapon Upgrades lowers the guns' CPU
+  const on = E.fitResources(E.parseFit(RIFTER.replace(' /offline', '')), () => 0);
+  assert.ok(on.cpu[0] > none.cpu[0]); // an offline module uses no CPU
+});
+
+test('Minimum gets enough CPU and powergrid for the fit, and they cannot be lowered below it', () => {
+  const fit = E.parseFit(RIFTER);
+  for (const tier of [0, 1, 2]) {
+    const need = E.fitSkills(fit, tier);
+    const r = E.fitResources(fit, id => (need.has(id) ? need.get(id).lvl : 0));
+    assert.ok(r.cpu[0] <= r.cpu[1] && r.pg[0] <= r.pg[1], 'tier ' + tier + ' ' + JSON.stringify(r));
+  }
+  const need = E.fitSkills(fit, 0);
+  const cpu = E.skillByName('CPU Management').id;
+  assert.equal(need.get(cpu).why, 'fitting');
+  const C = E.fitCapped(fit, need, [[cpu, need.get(cpu).lvl - 1]]);
+  const r = E.fitResources(fit, id => (C.need.has(id) ? C.need.get(id).lvl : 0));
+  assert.ok(r.cpu[0] <= r.cpu[1]); // lowering is made up for or refused
+  assert.ok(E.fitFloors(fit, new Map([...need].map(([id, v]) => [id, v.lvl]))).get(cpu).by.has('CPU'));
 });
 
 test('fleetSkills takes the highest level any saved ship needs', () => {
