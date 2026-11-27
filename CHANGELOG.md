@@ -4,6 +4,7 @@ All notable changes to Remap Planner. Adding a new version at the top publishes 
 
 ## [Unreleased]
 
+- Fit tab: CPU and powergrid. Every level, Minimum included, now adds the fitting skills (CPU Management, Power Grid Management, Weapon Upgrades, Advanced Weapon Upgrades and others) the fit needs to have enough CPU and powergrid, picking the cheapest in skill points. The tab shows CPU and powergrid used and available at the planned levels, in red when the fit does not fit. The minus button cannot take a fitting skill below what the fit needs. The numbers come from the SDE dogma (ship and role bonuses, subsystems, rigs, implants, offline modules use none).
 - Electronic warfare support skills: a target painter in the fit brings Signature Focusing (and Target Painting IV), weapon disruptors bring Weapon Destabilization, sensor dampeners Signal Suppression, ECM Signal Dispersion and the range skills. They are added at Good and Elite and suggested at Minimal.
 - Fit tab: ship profiles. "+ New ship" starts an empty profile and the earlier ships stay; pick one from the list to switch, give it a name or keep the automatic one (ship and fit name), or delete it. Each profile keeps its fit, skill level, added and lowered skills in the browser. With two or more ships, "Plan the whole fleet" puts the skills for all of them (the highest level any ship needs) into the Plan tab.
 - Fit tab: the skill list is in alphabetical order, so a row stays in place when you lower or raise it. Only the suggestions are sorted by training time.
