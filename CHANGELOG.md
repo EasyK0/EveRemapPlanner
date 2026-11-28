@@ -4,6 +4,7 @@ All notable changes to Remap Planner. Adding a new version at the top publishes 
 
 ## [Unreleased]
 
+- Desktop app security: the local server now refuses requests sent by other websites (Origin and Sec-Fetch-Site checks), so a web page open in the browser can no longer close the planner through `/bye`. The check has its own tests in CI.
 - Browser tab icon: the planner now has its own icon (a red and white double chevron on a dark tile, in the page colours), built into the page so it also shows in the app.
 - Fit tab: the left panel no longer overflows on narrower windows (for example at 1024 px with a long profile name or a long "Not recognised" line).
 - Fit tab: a long ship profile name no longer pushes the profile list, the name field and the fit box out of the left panel.
