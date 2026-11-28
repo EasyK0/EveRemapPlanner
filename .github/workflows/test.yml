@@ -28,6 +28,9 @@ jobs:
       - uses: actions/setup-go@v5
         with:
           go-version-file: exe-src/go.mod
+      - name: Test the local server guard
+        working-directory: exe-src
+        run: go test .
       - name: Vet and build
         working-directory: exe-src
         env:
