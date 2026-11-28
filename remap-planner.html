@@ -56,7 +56,8 @@ details[open] summary { margin-bottom: 8px; }
 .btn.primary { background: var(--accent); color: var(--accent-ink); border-color: var(--accent); font-weight: 600; }
 .btn.small { padding: 4px 9px; font-size: 12px; }
 .profrow { display: flex; gap: 6px; align-items: stretch; min-width: 0; }
-#inFit .field { grid-template-columns: minmax(0, 1fr); } /* a long profile name must not widen the panel */
+#inFit, #inFit .field { grid-template-columns: minmax(0, 1fr); } /* long names and texts must not widen the panel */
+.profrow { width: 100%; }
 #profSel, #profName { min-width: 0; background: var(--sunk); color: var(--ink); border: 1px solid var(--line); border-radius: var(--r); padding: 6px 8px; font: 13px var(--f-body); }
 #profSel { flex: 1; }
 #profName { display: block; width: 100%; margin-top: 6px; }
