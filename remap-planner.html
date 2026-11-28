@@ -74,8 +74,9 @@ details[open] summary { margin-bottom: 8px; }
 .meter .top { display: flex; justify-content: space-between; align-items: baseline; gap: 8px; }
 .meter .val { font: 600 15px var(--f-mono); font-variant-numeric: tabular-nums; }
 .meter .bar { height: 8px; margin-top: 7px; background: var(--sunk); border: 1px solid var(--line); border-radius: 4px; overflow: hidden; }
-.meter .bar i { display: block; height: 100%; background: var(--teal); }
-.meter.warn .bar i { background: var(--warn); }
+.meter .bar i { display: block; height: 100%; }
+.meter.cpu .bar i { background: #3d8bff; }
+.meter.pg .bar i { background: #2fbf5b; }
 .meter.over .bar i { background: var(--bad); }
 .meter.over .val, .meter.over .left { color: var(--bad); }
 .meter .left { font-size: 12.5px; color: var(--muted); margin-top: 5px; }
@@ -1161,16 +1162,16 @@ if (typeof module !== 'undefined') module.exports = { planText, parseFit, fitSki
     let resRow = '';
     if (res) {
       // Meters: how much CPU / powergrid the fit uses, what is left or what is missing.
-      const meter = (k, [u, o], unit) => {
+      const meter = (k, [u, o], unit, kind) => {
         u = Math.round(u * 10) / 10; o = Math.round(o * 10) / 10; // the same numbers as shown
         const over = u > o, pct = o > 0 ? u / o * 100 : 100, free = 100 - pct;
-        const cls = over ? ' over' : pct > 95 ? ' warn' : '';
+        const cls = ' ' + kind + (over ? ' over' : '');
         const left = over ? L.resMiss(num(u - o, 1) + ' ' + unit) : L.resLeft(num(o - u, 1) + ' ' + unit, free > 0 && free < 1 ? '<1' : Math.floor(free));
         return `<div class="meter${cls}"><div class="top"><span class="k">${k}</span><span class="val">${num(u, 1)} / ${num(o, 1)} ${unit} · ${over ? Math.ceil(pct) : Math.floor(pct)}%</span></div>`
           + `<div class="bar"><i style="width:${Math.min(100, pct).toFixed(1)}%"></i></div><div class="left">${left}</div></div>`;
       };
       const short = res.cpu[0] > res.cpu[1] + 0.05 || res.pg[0] > res.pg[1] + 0.05;
-      resRow = `<div class="resrow">${meter(L.kCpu, res.cpu, 'tf')}${meter(L.kPg, res.pg, 'MW')}`
+      resRow = `<div class="resrow">${meter(L.kCpu, res.cpu, 'tf', 'cpu')}${meter(L.kPg, res.pg, 'MW', 'pg')}`
         + `<div class="n" style="grid-column:1/-1;margin-top:-6px">${L.resNote}${short ? ` · <span style="color:var(--bad)">${L.resShort}</span>` : ''}</div></div>`;
     }
     $('fitInfo').innerHTML = info + '<br>' + L.fitHelp;
