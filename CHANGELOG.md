@@ -4,6 +4,7 @@ All notable changes to Remap Planner. Adding a new version at the top publishes 
 
 ## [Unreleased]
 
+- Fit tab: the left panel no longer overflows on narrower windows (for example at 1024 px with a long profile name or a long "Not recognised" line).
 - Fit tab: a long ship profile name no longer pushes the profile list, the name field and the fit box out of the left panel.
 - Fit tab: CPU and powergrid moved to the summary at the top, each with a bar (CPU blue, powergrid green, red when over 100%), the percent used and how much is left or missing.
 - Fit tab: CPU and powergrid. Every level, Minimum included, now adds the fitting skills (CPU Management, Power Grid Management, Weapon Upgrades, Advanced Weapon Upgrades and others) the fit needs to have enough CPU and powergrid, picking the cheapest in skill points. The tab shows CPU and powergrid used and available at the planned levels, in red when the fit does not fit. The minus button cannot take a fitting skill below what the fit needs. The numbers come from the SDE dogma (ship and role bonuses, subsystems, rigs, implants, offline modules use none).
