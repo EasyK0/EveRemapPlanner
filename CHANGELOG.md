@@ -4,7 +4,7 @@ All notable changes to Remap Planner. Adding a new version at the top publishes 
 
 ## [Unreleased]
 
-- Browser tab icon: the planner now has its own icon (a network of nodes inside a blue and orange ring), built into the page so it also shows in the app.
+- Browser tab icon: the planner now has its own icon (a glowing blue brain with orange nodes), built into the page so it also shows in the app.
 - Fit tab: the left panel no longer overflows on narrower windows (for example at 1024 px with a long profile name or a long "Not recognised" line).
 - Fit tab: a long ship profile name no longer pushes the profile list, the name field and the fit box out of the left panel.
 - Fit tab: CPU and powergrid moved to the summary at the top, each with a bar (CPU blue, powergrid green, red when over 100%), the percent used and how much is left or missing.
